@@ -1,0 +1,44 @@
+[
+  {
+    "id": "2048",
+    "title": "2048",
+    "description": "Join the numbers and get to the 2048 tile!",
+    "thumbnail": "https://picsum.photos/seed/2048/400/300",
+    "iframeUrl": "https://play2048.co/"
+  },
+  {
+    "id": "hextris",
+    "title": "Hextris",
+    "description": "Fast-paced puzzle game inspired by Tetris.",
+    "thumbnail": "https://picsum.photos/seed/hextris/400/300",
+    "iframeUrl": "https://hextris.io/"
+  },
+  {
+    "id": "flappy-bird",
+    "title": "Flappy Bird Clone",
+    "description": "Fly through the pipes without hitting them.",
+    "thumbnail": "https://picsum.photos/seed/flappy/400/300",
+    "iframeUrl": "https://wayou.github.io/flappybird/"
+  },
+  {
+    "id": "tetris",
+    "title": "Tetris",
+    "description": "The classic block-stacking puzzle game.",
+    "thumbnail": "https://picsum.photos/seed/tetris/400/300",
+    "iframeUrl": "https://tetris.com/play-tetris"
+  },
+  {
+    "id": "snake",
+    "title": "Snake",
+    "description": "Eat the apples and grow longer.",
+    "thumbnail": "https://picsum.photos/seed/snake/400/300",
+    "iframeUrl": "https://www.google.com/logos/2010/pacman10-i.html"
+  },
+  {
+    "id": "doodle-jump",
+    "title": "Doodle Jump",
+    "description": "Jump as high as you can!",
+    "thumbnail": "https://picsum.photos/seed/jump/400/300",
+    "iframeUrl": "https://doodlejump.io/"
+  }
+]
