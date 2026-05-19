@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en-us">
+<base href="https://rawcdn.githack.com/bubbls/ports/main/fpn-FULLY_RECRAFTED-web/">
+<head>
+  <meta charset="utf-8">
+  <title>Fundamental Paper Novel</title>
+  <style> html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; } #canvas { width: 100% !important; height: 100% !important; display: block; } </style>
+</head>
+<body>
+  <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex=-1></canvas>
+   <script>
+    async function mergeWasmParts() {
+        const parts = ['renpy.wasm.part1', 'renpy.wasm.part2'];
+        const responses = await Promise.all(parts.map(p => fetch(p)));
+        const buffers = await Promise.all(responses.map(r => r.arrayBuffer()));
+        return URL.createObjectURL(new Blob(buffers));
+    }
+    mergeWasmParts().then(wasmUrl => {
+        window.wasmBinaryFile = wasmUrl;
+        let renpypre = document.createElement("script");
+        renpypre.src = "renpy-pre.js";  
+        renpypre.onload = () => {
+            let renpy = document.createElement("script");
+            renpy.src = "renpy.js";  
+            document.body.appendChild(renpy);
+        };
+        document.body.appendChild(renpypre);
+    });
+</script>
+</body>
+</html>

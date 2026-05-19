@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <base href="https://cdn.jsdelivr.net/gh/wasm-rip/HellTaker-Web@main/helltakerweb/">
+<meta charset="utf-8">
+<title>Unity WebGL Player | Helltaker</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+  }
+  #unity-container {
+    width: 100% !important;
+    height: 100% !important;
+  }
+  #unity-canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+  }
+</style>
+</head>
+<body>
+<div id="unity-container">
+<canvas id="unity-canvas" width="960" height="600" tabindex="-1"></canvas>
+<div id="unity-loading-bar">
+<div id="unity-progress-bar-full"></div>
+</div>
+</div>
+<script>
+const base = "https://cdn.jsdelivr.net/gh/wasm-rip/HellTaker-Web@main/helltakerweb/Build/";
+async function mergeChunks(name, parts) {
+const buffers = [];
+for (let i = 1; i <= parts; i++) {
+const res = await fetch(`${base}${name}.part${i}`);
+buffers.push(await res.arrayBuffer());
+}
+return URL.createObjectURL(new Blob(buffers, { type: 'application/octet-stream' }));
+}
+var canvas = document.querySelector("#unity-canvas");
+var script = document.createElement("script");
+script.src = base + "webgl.loader.js";
+script.onload = async () => {
+const dataBlob = await mergeChunks("webgl.data", 3);
+const wasmBlob = await mergeChunks("webgl.wasm", 3);
+var config = {
+dataUrl: dataBlob,
+frameworkUrl: base + "webgl.framework.js",
+codeUrl: wasmBlob,
+streamingAssetsUrl: "StreamingAssets",
+companyName: "vanripper",
+productName: "Helltaker",
+productVersion: "ex1.1",
+};
+createUnityInstance(canvas, config, (progress) => {
+document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
+}).then((unityInstance) => {
+document.querySelector("#unity-loading-bar").style.display = "none";
+});
+};
+document.body.appendChild(script);
+</script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 {
-  "name": "Unblocked Games Hub",
-  "description": "A simple catalog of unblocked web games with a built-in player.",
-  "requestFramePermissions": []
+  "name": "QTX Labs",
+  "description": "The ultimate collection of unblocked web games by QTX Labs.",
+  "requestFramePermissions": ["fullscreen"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
