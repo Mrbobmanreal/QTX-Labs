@@ -106,7 +106,7 @@
   {
     "id": "bfdi-branches",
     "title": "BFDI Branches",
-    "iframeUrl": "./src/games/bfdi-branches.html",
+    "iframeUrl": "https://playgroundfree.github.io/bfdi-branches/",
     "category": "Adventure",
     "thumbnail": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=400&h=250",
     "description": "Explore the branches of BFDI in this fan-made Godot adventure."
@@ -118,5 +118,29 @@
     "category": "Horror",
     "thumbnail": "https://img.gamedistribution.com/5fd354b3e8e24c2598380d3cd355e48d-512x512.jpeg",
     "description": "The third installment of the Frickbears saga. Can you survive the night?"
+  },
+  {
+    "id": "neon-canvas",
+    "title": "Neon Canvas",
+    "iframeUrl": "./src/games/neon-canvas.html",
+    "category": "Arcade",
+    "thumbnail": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=400&h=250",
+    "description": "A high-performance interactive retro vector synthwave grid shooter built to test canvas speed."
+  },
+  {
+    "id": "bfdia-5b",
+    "title": "BFDIA 5b",
+    "iframeUrl": "https://coppersalts.github.io/HTML5b/",
+    "category": "Puzzle",
+    "thumbnail": "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&q=80&w=400&h=250",
+    "description": "Play the HTML5 port of BFDIA 5b, the beloved puzzle platformer as seen in Battle for Dream Island!"
+  },
+  {
+    "id": "webblox-demo",
+    "title": "WebBlox [DEMO]",
+    "iframeUrl": "./src/games/webblox-demo.html",
+    "category": "Adventure",
+    "thumbnail": "https://images.unsplash.com/photo-1560942485-b2a11cc13456?auto=format&fit=crop&q=80&w=400&h=250",
+    "description": "WebBlox brick and block simulation engine. Fully self-hosted and unblocked via diagnostic tunnel bypass."
   }
 ]

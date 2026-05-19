@@ -1,8 +1,5 @@
 // QTX Labs - Vanilla JS Implementation
-import { GoogleGenAI } from "@google/genai";
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-// This version runs directly in the browser without any build step.
+// Note: Gemini API runs securely on the backend server via proxy.
 
 let debugLogs = [];
 let showDebugPanel = false;
@@ -52,6 +49,25 @@ let projects = JSON.parse(localStorage.getItem('studio_projects')) || [];
 let currentProjectId = localStorage.getItem('currentProjectId') || null;
 let autoSaveActive = localStorage.getItem('autoSaveEnabled') === 'true';
 let labIdentity = JSON.parse(localStorage.getItem('lab_identity')) || { name: 'Operator', title: 'Lead Researcher', icon: 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?auto=format&fit=crop&q=80&w=100&h=100' };
+
+let reportedBugs = JSON.parse(localStorage.getItem('reported_bugs')) || [
+  {
+    id: 'bug-1',
+    gameId: 'sonic-mania',
+    gameTitle: 'Sonic Mania',
+    title: 'Visual novel elements overlapping with audio frequencies',
+    description: 'When running custom music frequencies alongside Sonic Mania, frame pacing fluctuates.',
+    stepsToReproduce: '1. Connect Nightride FM\n2. Launch Sonic Mania\n3. Observe frame pace indicator in lower-left grid.',
+    severity: 'Medium',
+    status: 'Investigating',
+    timestamp: '2026-05-19 12:44',
+    reporter: 'Lead Operator',
+    comments: [
+      { author: 'Lab System', text: 'Telemetry packet successfully logged.', time: '2026-05-19 12:44' }
+    ]
+  }
+];
+let bugPreselectedGameId = '';
 
 // Playtime Tracking
 let playTimes = JSON.parse(localStorage.getItem('studio_playtimes')) || {}; // gameId -> seconds
@@ -1102,11 +1118,24 @@ async function askAIToBuild() {
   render();
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: [{ role: 'user', parts: [{ text: aiPrompt }] }]
+    const res = await fetch("/api/gemini/generate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        prompt: aiPrompt,
+        model: "gemini-3.5-flash"
+      })
     });
-    const text = response.text;
+
+    if (!res.ok) {
+      const errorJson = await res.json().catch(() => ({}));
+      throw new Error(errorJson.message || errorJson.error || "Failed to call backend Gemini API");
+    }
+
+    const data = await res.json();
+    const text = data.text;
     if (!text) throw new Error("Empty response from AI");
     const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
     const commands = JSON.parse(cleanJson);
@@ -1451,6 +1480,7 @@ function render() {
              <button onclick="window.setTab('games')" class="px-2 sm:px-4 py-2 text-[10px] sm:text-sm font-bold uppercase tracking-widest transition-colors ${currentTab === 'games' ? 'text-[#00ff00] border-b-2 border-[#00ff00]' : 'text-[#666] hover:text-white'}">Games</button>
              <button onclick="window.setTab('music')" class="px-2 sm:px-4 py-2 text-[10px] sm:text-sm font-bold uppercase tracking-widest transition-colors ${currentTab === 'music' ? 'text-[#00ff00] border-b-2 border-[#00ff00]' : 'text-[#666] hover:text-white'}">Music</button>
              <button onclick="window.setTab('projects_hub')" class="px-2 sm:px-4 py-2 text-[10px] sm:text-sm font-bold uppercase tracking-widest transition-colors ${(currentTab === 'projects_hub' || currentTab === 'create') ? 'text-[#00ff00] border-b-2 border-[#00ff00]' : 'text-[#666] hover:text-white'}">Build</button>
+             <button onclick="window.setTab('bugs')" class="px-2 sm:px-4 py-2 text-[10px] sm:text-sm font-bold uppercase tracking-widest transition-colors ${currentTab === 'bugs' ? 'text-[#00ff00] border-b-2 border-[#00ff00]' : 'text-[#666] hover:text-white'}">Bugs</button>
           </nav>
 
           <!-- Lab Identity Badge (Hidden on mobile) -->
@@ -2420,6 +2450,198 @@ function render() {
               </div>
             </main>
           </div>
+        ` : currentTab === 'bugs' ? `
+          <!-- Bugs Tab Content -->
+          <div class="max-w-7xl mx-auto px-4 py-8 space-y-12 animate-in fade-in duration-500">
+             <header class="text-center bg-[#0c0c0c] border border-[#222] p-8 sm:p-12 rounded-[2.5rem] relative overflow-hidden">
+                <div class="absolute -top-24 -left-24 w-64 h-64 bg-red-500/5 rounded-full blur-[100px]"></div>
+                <div class="absolute -bottom-24 -right-24 w-64 h-64 bg-[#00ff00]/5 rounded-full blur-[100px]"></div>
+                <div class="relative z-10 space-y-2">
+                   <h2 class="text-4xl sm:text-5xl font-black uppercase italic tracking-tighter leading-none mb-2">Anomalies & <span class="text-[#00ff00]">Bugs</span></h2>
+                   <p class="text-[#666] font-mono tracking-widest uppercase text-[10px] sm:text-xs">Diagnostic Node Matrix // Incident Documentation Console</p>
+                </div>
+             </header>
+
+             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Submission Console Form -->
+                <div class="space-y-6">
+                   <div class="bg-[#111] border border-[#222] rounded-[2.5rem] p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+                      <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-[#00ff00]/5 rounded-full blur-[80px]"></div>
+                      <h3 class="text-xl font-black uppercase italic mb-6 flex items-center gap-2.5">
+                        <svg class="text-red-500 animate-pulse" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.001 3.001 0 1 1 6 0v1"/><path d="M12 20c-4.963 0-9-4.038-9-9 0-1.503.379-2.91 1-4.15l1.62 1.62c-.407.749-.62 1.583-.62 2.53a7.002 7.002 0 1 0 14 0c0-.947-.213-1.781-.62-2.53l1.62-1.62c.621 1.24 1 2.647 1 4.15 0 4.962-4.037 9-9 9Z"/><path d="M12 9v4"/><polyline points="12 17 12.01 17"/></svg>
+                        Log New Incident
+                      </h3>
+
+                      <form onsubmit="event.preventDefault(); window.submitBugReport(this);" class="space-y-5 relative z-10">
+                         <div class="space-y-1.5">
+                            <label class="text-[9px] font-mono text-[#444] uppercase tracking-widest pl-1">Target Module / Game</label>
+                            <select name="gameId" class="w-full bg-black border border-[#222] rounded-xl p-3 text-xs font-bold text-white focus:border-[#00ff00]/50 outline-none transition-all">
+                               <option value="general" ${bugPreselectedGameId === 'general' || bugPreselectedGameId === '' ? 'selected' : ''}>[General] Site Platform & Visualizer</option>
+                               ${games.map(g => `<option value="${g.id}" ${bugPreselectedGameId === g.id ? 'selected' : ''}>${g.title}</option>`).join('')}
+                            </select>
+                         </div>
+
+                         <div class="space-y-1.5">
+                            <label class="text-[9px] font-mono text-[#444] uppercase tracking-widest pl-1">Anomaly Title</label>
+                            <input name="title" type="text" required placeholder="e.g., Audio tracks stuttering on load" class="w-full bg-black border border-[#222] rounded-xl p-3 text-xs font-bold focus:border-[#00ff00]/50 outline-none transition-all text-white placeholder-[#222] uppercase italic">
+                         </div>
+
+                         <div class="space-y-1.5">
+                            <label class="text-[9px] font-mono text-[#444] uppercase tracking-widest pl-1 font-bold">Severity Matrix</label>
+                            <div class="grid grid-cols-4 gap-1.5">
+                               ${['Low', 'Medium', 'High', 'Critical'].map(sev => {
+                                 let textCol = sev === 'Low' ? 'text-green-400' : sev === 'Medium' ? 'text-yellow-400' : sev === 'High' ? 'text-orange-400' : 'text-red-500';
+                                 let borderCol = sev === 'Low' ? 'border-green-500/30' : sev === 'Medium' ? 'border-yellow-500/30' : sev === 'High' ? 'border-orange-500/30' : 'border-red-500/30';
+                                 return `
+                                    <label class="cursor-pointer">
+                                       <input type="radio" name="severity" value="${sev}" class="peer hidden" ${sev === 'Medium' ? 'checked' : ''}>
+                                       <div class="py-2.5 text-[9px] font-mono text-center border ${borderCol} rounded-lg bg-black text-[#555] opacity-50 peer-checked:opacity-100 peer-checked:bg-white/5 peer-checked:border-white transition-all">
+                                          <span class="${textCol} font-bold">${sev}</span>
+                                       </div>
+                                    </label>
+                                 `;
+                               }).join('')}
+                            </div>
+                         </div>
+
+                         <div class="space-y-1.5">
+                            <label class="text-[9px] font-mono text-[#444] uppercase tracking-widest pl-1">Detailed Anomaly Description</label>
+                            <textarea name="description" required rows="4" placeholder="What happens, when, and what is the expected outcome..." class="w-full bg-black border border-[#222] rounded-xl p-3 text-xs font-bold focus:border-[#00ff00]/50 outline-none transition-all text-white placeholder-[#222] resize-none"></textarea>
+                         </div>
+
+                         <div class="space-y-1.5">
+                            <label class="text-[9px] font-mono text-[#444] uppercase tracking-widest pl-1 font-bold">Steps to Reproduce (Optional)</label>
+                            <textarea name="stepsToReproduce" rows="3" placeholder="1. Open Game&#10;2. Press play&#10;3. Applet freezes" class="w-full bg-black border border-[#222] rounded-xl p-3 text-xs font-mono focus:border-[#00ff00]/50 outline-none transition-all text-white placeholder-[#222] resize-none"></textarea>
+                         </div>
+
+                         <button type="submit" class="w-full py-4 bg-white text-black font-black uppercase italic tracking-widest text-xs rounded-xl shadow-xl hover:bg-[#00ff00] hover:shadow-[0_0_20px_rgba(0,255,0,0.3)] transition-all flex items-center justify-center gap-2 group">
+                            <svg class="group-hover:rotate-12 transition-transform" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            Transmit Diagnostic Dossier
+                         </button>
+                      </form>
+                   </div>
+                </div>
+
+                <!-- Active Anomalies Dashboard List -->
+                <div class="lg:col-span-2 space-y-6">
+                   <div class="bg-[#0c0c0c] border border-[#222] rounded-[2rem] p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                      <div class="space-y-1 text-center md:text-left">
+                         <h4 class="text-xl font-black uppercase italic tracking-tighter">Lab Incident Logs</h4>
+                         <p class="text-[9px] text-[#444] font-mono uppercase tracking-[0.2em]">Active Records: ${reportedBugs.length} anomaly nodes documented</p>
+                      </div>
+                      <div class="flex gap-2">
+                         <button onclick="window.clearBugs()" class="px-4 py-2 bg-red-950/20 border border-red-900/40 text-red-500 hover:bg-red-500 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all">
+                            Purge Records
+                         </button>
+                      </div>
+                   </div>
+
+                   <div class="space-y-4 max-h-[75vh] overflow-y-auto pr-2 no-scrollbar">
+                      ${reportedBugs.length === 0 ? `
+                        <div class="border border-[#222] bg-emerald-500/5 p-12 rounded-[2.5rem] text-center space-y-3">
+                           <div class="text-[#333] flex justify-center text-emerald-500 animate-pulse">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                           </div>
+                           <h4 class="text-lg font-black uppercase tracking-tight text-emerald-400">System Status Nominal</h4>
+                           <p class="text-[#555] text-xs uppercase font-bold tracking-wider max-w-sm mx-auto leading-relaxed">No anomalous wave patterns or active bugs listed in current session storage.</p>
+                        </div>
+                      ` : reportedBugs.map(bug => {
+                         let severityCol = bug.severity === 'Low' ? 'text-green-400 bg-green-500/10 border-green-500/20' : bug.severity === 'Medium' ? 'text-yellow-400 bg-yellow-400/10 border-yellow-500/20' : bug.severity === 'High' ? 'text-orange-400 bg-orange-400/10 border-orange-500/20' : 'text-red-500 bg-red-500/10 border-red-500/20 animate-pulse font-bold';
+                         let statusCol = bug.status === 'Patched' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : bug.status === 'Triaged' ? 'text-blue-400 bg-blue-500/10 border-blue-500/20' : 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20 animate-pulse';
+                         
+                         return `
+                            <div class="bg-[#111] border border-[#222] rounded-[2rem] p-6 space-y-4 hover:border-white/10 transition-colors shadow-xl">
+                               <div class="flex items-start justify-between gap-4">
+                                  <div class="space-y-1.5 flex-1 min-w-0">
+                                     <div class="flex flex-wrap items-center gap-2">
+                                        <span class="px-2 py-0.5 rounded text-[8px] font-mono tracking-widest uppercase border ${severityCol}">
+                                           ${bug.severity}
+                                        </span>
+                                        <span class="px-2 py-0.5 rounded text-[8px] font-mono tracking-widest uppercase border ${statusCol}">
+                                           ${bug.status}
+                                        </span>
+                                        <span class="text-[9px] font-mono text-[#555] uppercase">${bug.timestamp}</span>
+                                     </div>
+                                     <h4 class="text-base font-black uppercase italic tracking-tight text-[#00ff00] truncate">
+                                        ${bug.title}
+                                     </h4>
+                                     <div class="flex items-center gap-1.5 text-[9px] font-mono text-[#555] uppercase tracking-wider">
+                                        <svg class="text-[#555]" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                                        Module: <span class="text-[#888] font-bold">${bug.gameTitle || 'Site Core'}</span>
+                                        <span class="text-[#333] px-1">|</span>
+                                        Reporter: <span class="text-[#888] font-bold">${bug.reporter || 'Operator'}</span>
+                                     </div>
+                                  </div>
+                                  <button onclick="window.deleteBug('${bug.id}')" class="p-2 hover:bg-red-500/10 text-[#444] hover:text-red-500 rounded-lg transition-colors" title="Purge Record">
+                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                  </button>
+                                </div>
+
+                               <div class="text-xs text-[#888] font-medium leading-relaxed bg-[#0a0a0a] p-4 rounded-xl border border-white/5 whitespace-pre-wrap">
+                                  ${bug.description}
+                               </div>
+
+                               ${bug.stepsToReproduce ? `
+                                 <div class="space-y-1">
+                                    <div class="text-[9px] font-mono text-[#444] uppercase tracking-widest pl-1">Diagnostic replication script</div>
+                                    <div class="font-mono text-[10px] text-red-400/80 bg-black/45 p-3 rounded-lg border border-red-950/25 whitespace-pre-wrap leading-relaxed">
+                                       ${bug.stepsToReproduce}
+                                    </div>
+                                 </div>
+                               ` : ''}
+
+                               <!-- Comments/Developer log -->
+                               <div class="space-y-2 border-t border-white/5 pt-4">
+                                  <div class="flex items-center justify-between">
+                                     <h5 class="text-[9px] font-mono text-[#444] uppercase tracking-widest">Incident Log Thread</h5>
+                                  </div>
+
+                                  <div class="space-y-2 max-h-36 overflow-y-auto pr-1 no-scrollbar">
+                                     ${(!bug.comments || bug.comments.length === 0) ? `
+                                        <p class="text-[9px] text-[#333] italic pl-1">No developer notes logged for this incident</p>
+                                     ` : bug.comments.map(c => `
+                                        <div class="bg-black/30 p-2.5 rounded-lg border border-white/5 flex items-start justify-between text-[10px] leading-relaxed gap-4">
+                                           <div class="space-y-0.5 flex-1 select-text">
+                                              <span class="font-black text-white/90 uppercase">${c.author}:</span>
+                                              <span class="text-[#777]">${c.text}</span>
+                                           </div>
+                                           <span class="text-[8px] font-mono text-[#333] uppercase shrink-0">${c.time}</span>
+                                        </div>
+                                     `).join('')}
+                                  </div>
+
+                                  <!-- Add Note Input -->
+                                  <div class="flex gap-2 pt-2">
+                                     <input id="note-input-${bug.id}" type="text" placeholder="Add developer note..." class="flex-1 bg-black border border-[#222] rounded-lg p-2 text-xs focus:border-[#00ff00]/40 outline-none text-white italic">
+                                     <button onclick="window.addBugComment('${bug.id}')" class="px-3 py-2 bg-white/5 border border-white/10 hover:border-[#00ff00]/50 hover:text-[#00ff00] text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all shrink-0">
+                                        Log Note
+                                     </button>
+                                  </div>
+                               </div>
+
+                               <!-- Control Center -->
+                               <div class="flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-4">
+                                  <div class="flex items-center gap-2">
+                                     <span class="text-[9px] font-mono text-[#444] uppercase tracking-widest">Update status node:</span>
+                                     <div class="flex bg-black p-0.5 rounded-lg border border-[#222]">
+                                        ${['Investigating', 'Triaged', 'Patched'].map(st => `
+                                           <button 
+                                              onclick="window.updateBugStatus('${bug.id}', '${st}')"
+                                              class="px-2 py-1 rounded text-[8px] font-black uppercase transition-all ${bug.status === st ? 'bg-white/10 text-white font-bold' : 'text-[#444] hover:text-white'}"
+                                           >
+                                              ${st}
+                                           </button>
+                                        `).join('')}
+                                     </div>
+                                  </div>
+                               </div>
+                            </div>
+                         `;
+                      }).join('')}
+                   </div>
+                </div>
+             </div>
+          </div>
         ` : ''}
       </main>
 
@@ -2807,12 +3029,20 @@ function renderModal() {
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
           </a>
           ` : ''}
+          <button 
+            onclick="window.openBugReportFromGame('${selectedGame.id}')"
+            class="hidden sm:flex items-center gap-2 px-3 py-2 bg-[#1a1a1a] border border-[#333] hover:border-yellow-500/50 hover:bg-yellow-500/10 rounded-lg transition-all text-[#888] hover:text-yellow-500 text-xs font-bold uppercase tracking-wider"
+            title="Report bug/issue with this module"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.001 3.001 0 1 1 6 0v1"/><path d="M12 20c-4.963 0-9-4.038-9-9 0-1.503.379-2.91 1-4.15l1.62 1.62c-.407.749-.62 1.583-.62 2.53a7.002 7.002 0 1 0 14 0c0-.947-.213-1.781-.62-2.53l1.62-1.62c.621 1.24 1 2.647 1 4.15 0 4.962-4.037 9-9 9Z"/><path d="M12 9v4"/><polyline points="12 17 12.01 17"/></svg>
+            <span>Report Bug</span>
+          </button>
           <div class="w-px h-6 bg-[#333] mx-2" />
           <button 
             onclick="window.closeGame()"
             class="p-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-lg transition-all flex items-center gap-2 font-bold px-4"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             CLOSE
           </button>
         </div>
@@ -2929,6 +3159,115 @@ window.formatDuration = formatDuration;
 window.askAIToBuild = askAIToBuild;
 window.setStudioTool = setStudioTool;
 window.setRibbonTab = setRibbonTab;
+// Bug Reporting Functions
+function submitBugReport(form) {
+  const formData = new window.FormData(form);
+  const gameId = formData.get('gameId');
+  const title = formData.get('title') || 'Untitled Incident';
+  const severity = formData.get('severity') || 'Medium';
+  const description = formData.get('description') || '';
+  const stepsToReproduce = formData.get('stepsToReproduce') || '';
+
+  // Find target game title
+  let gameTitle = 'General Site Platform';
+  if (gameId !== 'general') {
+    const targetGame = games.find(g => g.id === gameId);
+    if (targetGame) gameTitle = targetGame.title;
+  }
+
+  const logTime = new Date().toISOString().replace('T', ' ').substring(0, 16);
+  const newBug = {
+    id: 'bug-' + Date.now(),
+    gameId,
+    gameTitle,
+    title,
+    severity,
+    description,
+    stepsToReproduce,
+    status: 'Investigating',
+    timestamp: logTime,
+    reporter: labIdentity.name || 'Operator',
+    comments: [
+      { author: 'Lab System', text: 'Telemetry packet successfully logged.', time: logTime }
+    ]
+  };
+
+  reportedBugs.unshift(newBug);
+  localStorage.setItem('reported_bugs', JSON.stringify(reportedBugs));
+  bugPreselectedGameId = ''; // Reset preselected game
+  
+  showToast('Diagnostic Report Transmitted');
+  form.reset();
+  render();
+}
+
+function deleteBug(id) {
+  reportedBugs = reportedBugs.filter(b => b.id !== id);
+  localStorage.setItem('reported_bugs', JSON.stringify(reportedBugs));
+  showToast('Incident Record Purged');
+  render();
+}
+
+function clearBugs() {
+  if (confirm('Are you sure you want to purge all active incident records? This cannot be undone.')) {
+    reportedBugs = [];
+    localStorage.setItem('reported_bugs', JSON.stringify(reportedBugs));
+    showToast('All Incident Logs Purged');
+    render();
+  }
+}
+
+function updateBugStatus(id, newStatus) {
+  const bug = reportedBugs.find(b => b.id === id);
+  if (bug) {
+    bug.status = newStatus;
+    const logTime = new Date().toISOString().replace('T', ' ').substring(0, 16);
+    bug.comments.push({
+      author: 'Lab System',
+      text: `Status updated to [${newStatus}]`,
+      time: logTime
+    });
+    localStorage.setItem('reported_bugs', JSON.stringify(reportedBugs));
+    showToast(`Status Updated to ${newStatus}`);
+    render();
+  }
+}
+
+function addBugComment(id) {
+  const input = document.getElementById(`note-input-${id}`);
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) return;
+
+  const bug = reportedBugs.find(b => b.id === id);
+  if (bug) {
+    const logTime = new Date().toISOString().replace('T', ' ').substring(0, 16);
+    bug.comments.push({
+      author: labIdentity.name || 'Operator',
+      text: val,
+      time: logTime
+    });
+    localStorage.setItem('reported_bugs', JSON.stringify(reportedBugs));
+    input.value = '';
+    showToast('Log Entry Appended');
+    render();
+  }
+}
+
+function openBugReportFromGame(gameId) {
+  bugPreselectedGameId = gameId;
+  closeGame();
+  setTab('bugs');
+}
+
+// Export Bug Reporting to Window
+window.submitBugReport = submitBugReport;
+window.deleteBug = deleteBug;
+window.clearBugs = clearBugs;
+window.updateBugStatus = updateBugStatus;
+window.addBugComment = addBugComment;
+window.openBugReportFromGame = openBugReportFromGame;
+
 window.playRandom = () => {
   const random = games[Math.floor(Math.random() * games.length)];
   openGame(random.id);
