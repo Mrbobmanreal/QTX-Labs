@@ -25,50 +25,131 @@
         display: none;
       }
       canvas {
-        width: 100vw;
-        height: 100vh;
+        width: 100% !important;
+        height: 100% !important;
         display: block;
       }
 
       /* --- Controller Toggle Button --- */
       #toggle-controls-btn {
         position: fixed;
-        top: 10px;
-        left: 10px;
-        z-index: 9999;
-        background: rgba(0, 0, 0, 0.7);
+        bottom: 24px;
+        right: 24px;
+        z-index: 10000;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(8px);
         color: white;
-        border: 1px solid #fff;
-        border-radius: 8px;
-        font-size: 1.5rem;
-        padding: 6px 10px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        width: 56px;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         cursor: pointer;
-        transition: background 0.2s;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       }
 
       #toggle-controls-btn:hover {
-        background: rgba(255, 255, 255, 0.15);
+        background: rgba(255, 255, 255, 0.1);
+        border-color: #00ff00;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 255, 0, 0.2);
+      }
+
+      #toggle-controls-btn.active {
+        background: #00ff00;
+        color: black;
+        border-color: #00ff00;
+      }
+      
+      #toggle-controls-btn.active svg path {
+        fill: black;
       }
 
       /* Controls container styling */
       #controls {
         position: fixed;
-        top: 60px;
-        left: 10px;
-        z-index: 9998;
-        background: rgba(0, 0, 0, 0.85);
-        border-radius: 12px;
-        padding: 20px;
-        max-width: 350px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        border: 1px solid rgba(255,255,255,0.1);
+        bottom: 96px;
+        right: 24px;
+        z-index: 9999;
+        background: rgba(10, 10, 10, 0.9);
+        backdrop-filter: blur(12px);
+        border-radius: 20px;
+        padding: 24px;
+        width: 320px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transform-origin: bottom right;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+        pointer-events: none;
+      }
+
+      #controls.visible {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+        pointer-events: auto;
+      }
+
+      .control-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        transition: background 0.2s;
+      }
+
+      .control-row:hover {
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .control-label {
+        font-size: 0.8rem;
+        color: #888;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .control-key {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.85rem;
+        color: #00ff00;
+        background: rgba(0, 255, 0, 0.1);
+        padding: 2px 8px;
+        border-radius: 6px;
+        border: 1px solid rgba(0, 255, 0, 0.2);
+      }
+
+      .controls-header {
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+
+      .controls-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin: 0;
+        color: white;
+      }
+
+      .controls-hint {
+        font-size: 0.7rem;
+        color: #555;
+        margin-top: 4px;
       }
     </style>
   </head>
   <body>
     <!-- Controller Button -->
     <button id="toggle-controls-btn" title="Toggle Controls">
-      <svg width="30px" height="30px" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="24px" height="24px" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M12.25 10C11.5596 10 11 9.44036 11 8.75C11 8.05964 11.5596 7.5 12.25 7.5C12.9404 7.5 13.5 8.05964 13.5 8.75C13.5 9.44036 12.9404 10 12.25 10Z" fill="#ffffff"/>
         <path d="M14.25 12.5C13.5596 12.5 13 11.9404 13 11.25C13 10.5596 13.5596 10 14.25 10C14.9404 10 15.5 10.5596 15.5 11.25C15.5 11.9404 14.9404 12.5 14.25 12.5Z" fill="#ffffff"/>
         <path fill-rule="evenodd" clip-rule="evenodd" d="M14.5 4H5.5C2.73858 4 0.5 6.23858 0.5 9V11C0.5 13.7614 2.73858 16 5.5 16H14.5C17.2614 16 19.5 13.7614 19.5 11V9C19.5 6.23858 17.2614 4 14.5 4ZM2.5 9C2.5 7.34315 3.84315 6 5.5 6H14.5C16.1569 6 17.5 7.34315 17.5 9V11C17.5 12.6569 16.1569 14 14.5 14H5.5C3.84315 14 2.5 12.6569 2.5 11V9Z" fill="#ffffff"/>
@@ -77,33 +158,47 @@
       </svg>
     </button>
 
-    <div class="container text-light" id="controls" hidden>
-      <figure>
-        <blockquote class="blockquote">
-          <h1 class="display-6" style="font-size: 1.5rem;"><strong>Keyboard Controls</strong></h1>
-        </blockquote>
-        <figcaption class="blockquote-footer text-light" style="font-size: 0.8rem;">
-          You can use a controller!
-        </figcaption>
-        <figcaption class="blockquote-footer text-light" style="font-size: 0.8rem;">
-          Save is stored in local storage.
-        </figcaption>
-      </figure>
-      <table class="table table-sm text-light" id="keyboard" style="font-size: 0.85rem;">
-        <thead>
-          <th scope="col">N64</th>
-          <th scope="col">Keyboard</th>
-        </thead>
-        <tbody>
-          <tr><td>A (Jump)</td><td>X</td></tr>
-          <tr><td>B (Attack)</td><td>C</td></tr>
-          <tr><td>Z (Crouch)</td><td>Space</td></tr>
-          <tr><td>Start</td><td>Enter</td></tr>
-          <tr><td>Stick</td><td>Arrow Keys</td></tr>
-          <tr><td>C-Buttons</td><td>WASD</td></tr>
-          <tr><td>R (Camera)</td><td>Q</td></tr>
-        </tbody>
-      </table>
+    <div id="controls">
+      <div class="controls-header">
+        <div>
+          <h2 class="controls-title">Key Mapping</h2>
+          <p class="controls-hint">Controller Support Enabled</p>
+        </div>
+        <div class="text-[10px] font-mono text-[#444] tracking-widest uppercase">Input v1</div>
+      </div>
+
+      <div class="control-row">
+          <span class="control-label">A (Jump)</span>
+          <span class="control-key">X</span>
+      </div>
+      <div class="control-row">
+          <span class="control-label">B (Attack)</span>
+          <span class="control-key">C</span>
+      </div>
+      <div class="control-row">
+          <span class="control-label">Z (Crouch)</span>
+          <span class="control-key">SPACE</span>
+      </div>
+      <div class="control-row">
+          <span class="control-label">Start</span>
+          <span class="control-key">ENTER</span>
+      </div>
+      <div class="control-row">
+          <span class="control-label">Stick</span>
+          <span class="control-key">ARROWS</span>
+      </div>
+      <div class="control-row">
+          <span class="control-label">C-Buttons</span>
+          <span class="control-key">WASD</span>
+      </div>
+      <div class="control-row" style="border:none;">
+          <span class="control-label">R (Camera)</span>
+          <span class="control-key">Q</span>
+      </div>
+
+      <div class="mt-4 pt-4 border-t border-white/5 text-center">
+          <p class="text-[10px] text-[#555] uppercase tracking-widest">Saved in Cloud Storage</p>
+      </div>
     </div>
 
     <div id="container">
@@ -112,12 +207,13 @@
 
     <script type="text/javascript">
       // Toggle controls visibility
-      document
-        .getElementById("toggle-controls-btn")
-        .addEventListener("click", () => {
-          const controls = document.getElementById("controls");
-          controls.hidden = !controls.hidden;
-        });
+      const toggleBtn = document.getElementById("toggle-controls-btn");
+      const controls = document.getElementById("controls");
+
+      toggleBtn.addEventListener("click", () => {
+        controls.classList.toggle("visible");
+        toggleBtn.classList.toggle("active");
+      });
 
       // Emscripten module setup
       var Module = {

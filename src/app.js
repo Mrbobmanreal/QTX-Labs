@@ -40,6 +40,7 @@ let recentlyPlayedIds = JSON.parse(localStorage.getItem('recentlyPlayed')) || []
 let favoriteGameIds = JSON.parse(localStorage.getItem('favoriteGames')) || [];
 let filteredGames = [];
 let searchQuery = '';
+let isLoading = true;
 let selectedGame = null;
 let isFullScreen = false;
 let currentTab = 'games'; // 'games', 'music', 'create', 'settings'
@@ -59,6 +60,19 @@ let currentSessionGameId = null;
 
 // AI Agent State
 let isGeneratingAI = false;
+
+function createSkeletonCard(size = 'normal') {
+  const isSmall = size === 'small';
+  return `
+    <div class="bg-[#0c0c0c] border border-[#1a1a1a] rounded-[2rem] overflow-hidden animate-shimmer shimmer">
+      <div class="aspect-video bg-[#111]"></div>
+      <div class="${isSmall ? 'p-4' : 'p-6'} space-y-3">
+        <div class="h-4 bg-[#1a1a1a] rounded-sm w-3/4"></div>
+        ${!isSmall ? `<div class="h-2 bg-[#141414] rounded-sm w-1/2"></div>` : ''}
+      </div>
+    </div>
+  `;
+}
 
 function createGameCard(game, size = 'normal') {
   const isFavorite = favoriteGameIds.includes(game.id);
@@ -756,6 +770,7 @@ window.addEventListener('keydown', (e) => {
 
 async function init() {
   initStudioState();
+  render();
   try {
     await initDB();
     userSongs = await loadSavedSongs();
@@ -769,6 +784,7 @@ async function init() {
     categories = ['All', ...uniqueCategories.sort()];
     
     filteredGames = [...games];
+    isLoading = false;
     render();
   } catch (error) {
     console.error('Failed to load games:', error);
@@ -791,6 +807,7 @@ function handleSearch(e) {
 function setCategory(category) {
   selectedCategory = category;
   applyFilters();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function applyFilters() {
@@ -937,22 +954,39 @@ function toggleFullScreen() {
   const container = document.getElementById('modal-container');
   if (!container) return;
   
-  if (!document.fullscreenElement) {
-    container.requestFullscreen().catch(err => {
-      console.warn('Fullscreen request failed:', err);
-      // Fallback for browsers that don't support it or if blocked
+  const doc = document;
+  const fsElement = doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
+  const requestFS = container.requestFullscreen || container.webkitRequestFullscreen || container.mozRequestFullScreen || container.msRequestFullscreen;
+  const exitFS = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
+
+  if (!fsElement) {
+    if (requestFS) {
+      requestFS.call(container).catch(err => {
+        console.warn('Fullscreen request failed:', err);
+        isFullScreen = !isFullScreen;
+        render();
+      });
+    } else {
+      // Fallback for browsers that don't support native FS (like iOS Safari on iPhone)
       isFullScreen = !isFullScreen;
-      renderModal();
-    });
+      render();
+    }
   } else {
-    document.exitFullscreen().catch(err => console.warn('Exit fullscreen failed:', err));
+    if (exitFS) {
+      exitFS.call(doc).catch(err => console.warn('Exit fullscreen failed:', err));
+    } else {
+      isFullScreen = false;
+      render();
+    }
   }
 }
 
 // Sync state with native fullscreen
-document.addEventListener('fullscreenchange', () => {
-  isFullScreen = !!document.fullscreenElement;
-  render(); // Use render instead of renderModal to ensure everything stays in sync
+['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(event => {
+  document.addEventListener(event, () => {
+    isFullScreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+    render();
+  });
 });
 
 function setTab(tab) {
@@ -1401,27 +1435,26 @@ function scaleObject(id, factor) {
 function render() {
   const app = document.getElementById('app');
   app.innerHTML = `
-    <div class="min-h-screen bg-[#0a0a0a] text-[#e5e5e5] font-sans selection:bg-[#00ff00] selection:text-black">
+    <div class="min-h-dvh bg-[#0a0a0a] text-[#e5e5e5] font-sans selection:bg-[#00ff00] selection:text-black">
       <!-- Header -->
-      <header class="border-b border-[#222] bg-[#0a0a0a]/80 backdrop-blur-md sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.reload()">
-            <div class="w-8 h-8 bg-[#00ff00] rounded flex items-center justify-center text-black">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="12" x2="10" y2="12"></line><line x1="8" y1="10" x2="8" y2="14"></line><line x1="15" y1="13" x2="15.01" y2="13"></line><line x1="18" y1="11" x2="18.01" y2="11"></line><rect x="2" y="6" width="20" height="12" rx="2"></rect></svg>
+      <header class="border-b border-[#222] bg-[#0a0a0a]/80 backdrop-blur-md sticky top-0 z-40 px-2 sm:px-0">
+        <div class="max-w-7xl mx-auto px-2 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
+          <div class="flex items-center gap-1.5 sm:gap-2 cursor-pointer" onclick="window.location.reload()">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 bg-[#00ff00] rounded flex items-center justify-center text-black">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="12" x2="10" y2="12"></line><line x1="8" y1="10" x2="8" y2="14"></line><line x1="15" y1="13" x2="15.01" y2="13"></line><line x1="18" y1="11" x2="18.01" y2="11"></line><rect x="2" y="6" width="20" height="12" rx="2"></rect></svg>
             </div>
-            <h1 class="text-xl font-bold tracking-tighter uppercase italic">QTX Labs</h1>
+            <h1 class="text-lg sm:text-xl font-bold tracking-tighter uppercase italic">QTX</h1>
           </div>
 
           <!-- Nav Tabs -->
           <nav class="flex items-center">
-             <button onclick="window.setTab('games')" class="px-4 py-2 text-sm font-bold uppercase tracking-widest transition-colors ${currentTab === 'games' ? 'text-[#00ff00] border-b-2 border-[#00ff00]' : 'text-[#666] hover:text-white'}">Games</button>
-             <button onclick="window.setTab('music')" class="px-4 py-2 text-sm font-bold uppercase tracking-widest transition-colors ${currentTab === 'music' ? 'text-[#00ff00] border-b-2 border-[#00ff00]' : 'text-[#666] hover:text-white'}">Music</button>
-             <button onclick="window.setTab('projects_hub')" class="px-4 py-2 text-sm font-bold uppercase tracking-widest transition-colors ${(currentTab === 'projects_hub' || currentTab === 'create') ? 'text-[#00ff00] border-b-2 border-[#00ff00]' : 'text-[#666] hover:text-white'}">Build Hub</button>
-             <button onclick="window.setTab('settings')" class="px-4 py-2 text-sm font-bold uppercase tracking-widest transition-colors ${currentTab === 'settings' ? 'text-[#00ff00] border-b-2 border-[#00ff00]' : 'text-[#666] hover:text-white'}">Settings</button>
+             <button onclick="window.setTab('games')" class="px-2 sm:px-4 py-2 text-[10px] sm:text-sm font-bold uppercase tracking-widest transition-colors ${currentTab === 'games' ? 'text-[#00ff00] border-b-2 border-[#00ff00]' : 'text-[#666] hover:text-white'}">Games</button>
+             <button onclick="window.setTab('music')" class="px-2 sm:px-4 py-2 text-[10px] sm:text-sm font-bold uppercase tracking-widest transition-colors ${currentTab === 'music' ? 'text-[#00ff00] border-b-2 border-[#00ff00]' : 'text-[#666] hover:text-white'}">Music</button>
+             <button onclick="window.setTab('projects_hub')" class="px-2 sm:px-4 py-2 text-[10px] sm:text-sm font-bold uppercase tracking-widest transition-colors ${(currentTab === 'projects_hub' || currentTab === 'create') ? 'text-[#00ff00] border-b-2 border-[#00ff00]' : 'text-[#666] hover:text-white'}">Build</button>
           </nav>
 
-          <!-- Lab Identity Badge -->
-          <div class="hidden lg:flex items-center gap-3 pl-4 border-l border-[#222] cursor-pointer hover:bg-white/5 p-1 rounded-xl transition-all" onclick="window.setTab('settings')">
+          <!-- Lab Identity Badge (Hidden on mobile) -->
+          <div class="hidden xl:flex items-center gap-3 pl-4 border-l border-[#222] cursor-pointer hover:bg-white/5 p-1 rounded-xl transition-all" onclick="window.setTab('settings')">
              <div class="text-right">
                 <div class="text-[10px] font-black uppercase text-white tracking-tight leading-none">${labIdentity.name}</div>
                 <div class="text-[8px] font-mono uppercase text-[#444] tracking-widest">${labIdentity.title}</div>
@@ -1432,16 +1465,16 @@ function render() {
           </div>
 
           ${currentTab === 'music' ? `
-            <label class="flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] border border-[#333] hover:border-[#00ff00]/50 rounded-full cursor-pointer transition-all text-xs font-bold uppercase tracking-widest text-[#888] hover:text-[#00ff00]">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-              <span>Add Song</span>
+            <label class="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-[#1a1a1a] border border-[#333] hover:border-[#00ff00]/50 rounded-full cursor-pointer transition-all text-[9px] sm:text-xs font-bold uppercase tracking-widest text-[#888] hover:text-[#00ff00]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <span class="hidden sm:inline">Add Song</span>
               <input type="file" multiple accept="audio/*" class="hidden" onchange="window.handleFileUpload(event)" />
             </label>
           ` : ''}
 
-          <div class="flex-1 max-w-md relative ${currentTab === 'games' ? '' : 'invisible pointer-events-none'}">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg class="h-4 w-4 text-[#00ff00] opacity-50 shadow-[0_0_8px_rgba(0,255,0,0.5)]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <div class="flex-1 max-w-[120px] sm:max-w-md relative ${currentTab === 'games' ? '' : 'invisible pointer-events-none'}">
+            <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+              <svg class="h-3 w-3 sm:h-4 sm:w-4 text-[#00ff00] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
               </svg>
@@ -1449,18 +1482,15 @@ function render() {
             <input
               id="search-input"
               type="text"
-              placeholder="Query Lab Directory..."
-              class="w-full bg-[#111] border-2 border-[#222] focus:border-[#00ff00]/50 rounded-xl py-2.5 pl-10 pr-4 focus:outline-none transition-all text-sm font-mono text-white placeholder-[#333] shadow-inner"
+              placeholder="Search..."
+              class="w-full bg-[#111] border border-[#222] focus:border-[#00ff00]/50 rounded-lg sm:rounded-xl py-1.5 sm:py-2.5 pl-8 sm:pl-10 pr-2 sm:pr-4 focus:outline-none transition-all text-[10px] sm:text-sm font-mono text-white placeholder-[#333]"
               value="${searchQuery}"
               oninput="window.handleSearch(event)"
             />
-            <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-              <span class="text-[8px] font-bold text-[#222] uppercase tracking-widest bg-[#050505] px-1.5 py-0.5 rounded border border-[#111]">Ctrl + F</span>
-            </div>
           </div>
 
           <div class="hidden sm:flex items-center gap-4 text-xs font-mono uppercase text-[#666]">
-            <span id="game-count">${currentTab === 'games' ? filteredGames.length + ' Games' : ''}</span>
+            <span id="game-count">${currentTab === 'games' ? (isLoading ? 'Analyzing Directory...' : filteredGames.length + ' Games') : ''}</span>
           </div>
         </div>
       </header>
@@ -1468,7 +1498,7 @@ function render() {
       <main class="max-w-7xl mx-auto px-4 py-8">
          ${currentTab === 'games' ? `
           <!-- Category Selection -->
-          <div class="mb-10 sticky top-[64px] z-30 -mx-4 px-4 sm:mx-0 sm:px-0 bg-[#0a0a0a]/80 backdrop-blur-xl py-4 border-b border-white/5">
+          <div class="mb-10 sticky top-14 sm:top-16 z-30 -mx-4 px-4 sm:mx-0 sm:px-0 bg-[#0a0a0a]/80 backdrop-blur-xl py-4 border-b border-white/5">
             <div id="category-bar" class="flex gap-3 overflow-x-auto no-scrollbar pb-1">
               <!-- Categories will be rendered here -->
             </div>
@@ -2513,6 +2543,13 @@ function renderCategoryBar() {
   const bar = document.getElementById('category-bar');
   if (!bar) return;
   
+  if (isLoading) {
+    bar.innerHTML = Array(8).fill(0).map(() => `
+      <div class="px-6 py-2.5 bg-[#0c0c0c] border border-[#1a1a1a] rounded-xl animate-shimmer shimmer w-24 h-9"></div>
+    `).join('');
+    return;
+  }
+  
   const displayCategories = [...categories];
   
   // Add virtual categories
@@ -2547,16 +2584,27 @@ function renderCategoryBar() {
     const isActive = selectedCategory === cat;
     const icon = categoryIcons[cat] || '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg>';
     
+    // Calculate count
+    let count = 0;
+    if (cat === 'All') count = games.length;
+    else if (cat === 'Favorites') count = favoriteGameIds.length;
+    else if (cat === 'Newest') count = games.slice(-10).length;
+    else count = games.filter(g => g.category === cat).length;
+
     return `
       <button 
         onclick="window.setCategory('${cat}')"
         class="group relative px-6 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-[0.1em] transition-all duration-300 flex-shrink-0 flex items-center gap-2.5 border italic
         ${isActive 
-          ? 'bg-white text-black border-white shadow-[0_10px_20px_-5px_rgba(255,255,255,0.2)]' 
-          : 'bg-[#111] text-[#777] border-[#222] hover:border-[#00ff00]/50 hover:text-white hover:bg-[#00ff00]/5'}"
+          ? 'bg-white text-black border-white shadow-[0_10px_20px_-5px_rgba(255,255,255,0.2)] scale-105 z-10' 
+          : 'bg-[#111] text-[#777] border-[#222] hover:border-[#00ff00]/50 hover:text-white hover:bg-[#00ff00]/5 hover:scale-102'}"
       >
         <span class="${isActive ? 'text-black' : 'text-[#00ff00]'} transition-colors">${icon}</span>
         <span class="relative z-10">${cat}</span>
+        <span class="ml-1 text-[8px] opacity-40 font-mono tracking-tighter">${count}</span>
+        ${isActive ? `
+          <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full"></div>
+        ` : ''}
       </button>
     `;
   }).join('');
@@ -2584,7 +2632,7 @@ function renderGrid() {
     recent?.classList.remove('hidden');
   }
 
-  if (filteredGames.length === 0) {
+  if (filteredGames.length === 0 && !isLoading) {
     grid.innerHTML = '';
     emptyState?.classList.remove('hidden');
     return;
@@ -2594,6 +2642,14 @@ function renderGrid() {
   
   // Clear grid
   grid.innerHTML = '';
+
+  if (isLoading) {
+    // Show total count of skeletons (e.g., 12)
+    for (let i = 0; i < 12; i++) {
+        grid.innerHTML += createSkeletonCard();
+    }
+    return;
+  }
   
   // Create an intersection observer for lazy loading individual cards
   const observer = new IntersectionObserver((entries) => {
@@ -2622,7 +2678,8 @@ function renderGrid() {
     const placeholder = document.createElement('div');
     placeholder.setAttribute('data-placeholder-id', game.id);
     // Placeholder matches the card's relative size for layout stability
-    placeholder.className = 'w-full aspect-[16/14] bg-[#0c0c0c] border border-[#1a1a1a] rounded-[2rem] animate-pulse';
+    placeholder.innerHTML = createSkeletonCard();
+    placeholder.className = 'w-full';
     grid.appendChild(placeholder);
     observer.observe(placeholder);
   });
@@ -2707,17 +2764,13 @@ function renderModal() {
     return;
   }
 
-  // Handle container padding for true fullscreen
-  if (isFullScreen) {
-    container.classList.remove('p-2', 'sm:p-4');
-  } else {
-    container.classList.add('p-2', 'sm:p-4');
-  }
+  // Remove padding entirely to allow modal to hit edges if needed
+  container.classList.remove('p-4', 'sm:p-8', 'p-2', 'sm:p-4');
 
   container.classList.remove('hidden');
   container.innerHTML = `
     <div
-      class="bg-[#111] border-[#333] overflow-hidden flex flex-col shadow-2xl transition-all duration-300 ${isFullScreen ? 'w-full h-full border-0 rounded-none' : 'w-[98vw] max-w-[1600px] h-[92vh] border rounded-3xl'}"
+      class="bg-[#111] border-[#333] overflow-hidden flex flex-col shadow-2xl transition-all duration-300 ${isFullScreen ? 'w-full h-full border-0 rounded-none' : 'w-[100vw] h-dvh border-0 rounded-none sm:w-[98vw] sm:h-[98dvh] sm:border sm:rounded-2xl lg:w-[95vw] lg:h-[95dvh]'}"
     >
       <!-- Toolbar -->
       <div class="p-3 border-b border-[#222] flex items-center justify-between bg-[#1a1a1a]">

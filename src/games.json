@@ -104,155 +104,19 @@
     "description": "The revolutionary 3D platformer that changed gaming forever. It's-a me, Mario!"
   },
   {
-    "id": "1v1-lol",
-    "title": "1v1.LOL",
-    "iframeUrl": "./src/games/1v1-lol.html",
-    "category": "Shooter",
-    "thumbnail": "https://play-lh.googleusercontent.com/6X9m0s0X5_5_5_5_5_5_5_5_5_5_5_5_5_5_5_5_5_5_5_5_5_5_5_5_5_5_5_5=w480-h960",
-    "description": "A construction-based battle royale experience. Build faster, survive longer."
-  },
-  {
-    "id": "bitlife",
-    "title": "BitLife",
-    "iframeUrl": "./src/games/bitlife.html",
-    "category": "Simulation",
-    "thumbnail": "https://images.unsplash.com/photo-1415025148099-17fe74102f28?auto=format&fit=crop&q=80&w=400&h=250",
-    "description": "Text-based simulator where you live your life however you want. Making choices since birth."
-  },
-  {
-    "id": "cookie-clicker",
-    "title": "Cookie Clicker",
-    "iframeUrl": "./src/games/cookie-clicker.html",
-    "category": "Idle",
-    "thumbnail": "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&q=80&w=400&h=250",
-    "description": "Click the cookie. Endless growth. Grandmas, farms, and interdimensional portals."
-  },
-  {
-    "id": "cubefield",
-    "title": "Cubefield",
-    "iframeUrl": "./src/games/cubefield.html",
-    "category": "Arcade",
-    "thumbnail": "https://www.cubefield.org.uk/logo.png",
-    "description": "Dodge the cubes at high speeds. High-octane minimal geometric survival."
-  },
-  {
-    "id": "eaglercraft",
-    "title": "Eaglercraft",
-    "iframeUrl": "./src/games/eaglercraft.html",
-    "category": "Sandbox",
-    "thumbnail": "https://images.unsplash.com/photo-1542751110-97427bbecf20?auto=format&fit=crop&q=80&w=400&h=250",
-    "description": "A unique sandbox experience inspired by the blockiest worlds."
-  },
-  {
-    "id": "minecraft-classic",
-    "title": "Minecraft Classic",
-    "iframeUrl": "./src/games/minecraft-classic.html",
-    "category": "Sandbox",
-    "thumbnail": "https://images.unsplash.com/photo-1587573011322-69977adec2c2?auto=format&fit=crop&q=80&w=400&h=250",
-    "description": "The original creative experience. Build anything you can imagine in 32 blocks."
-  },
-  {
-    "id": "paper-io-2",
-    "title": "Paper.io 2",
-    "iframeUrl": "./src/games/paper-io-2.html",
-    "category": "IO",
-    "thumbnail": "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=400&h=250",
-    "description": "Conquer as much territory as possible. Don't let others hit your trail!"
-  },
-  {
-    "id": "retro-bowl",
-    "title": "Retro Bowl",
-    "iframeUrl": "./src/games/retro-bowl.html",
-    "category": "Sports",
-    "thumbnail": "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=400&h=250",
-    "description": "The perfect game for the armchair quarterback. Manage and play with a retro vibe."
-  },
-  {
-    "id": "slope",
-    "title": "Slope",
-    "iframeUrl": "./src/games/slope.html",
-    "category": "Arcade",
-    "thumbnail": "https://img.gamedistribution.com/007f3549642d4a2489e5c6b659c258d4-512x512.jpeg",
-    "description": "Roll down the slope as far as you can. Gravity is your enemy."
-  },
-  {
-    "id": "subway-surfers",
-    "title": "Subway Surfers",
-    "iframeUrl": "./src/games/subway-surfers.html",
-    "category": "Arcade",
-    "thumbnail": "https://images.unsplash.com/photo-1533234451717-380d3ce3094e?auto=format&fit=crop&q=80&w=400&h=250",
-    "description": "Run from the inspector and his dog. Surf the subways and collect coins."
-  },
-  {
-    "id": "temple-run-2",
-    "title": "Temple Run 2",
-    "iframeUrl": "./src/games/temple-run-2.html",
-    "category": "Arcade",
-    "thumbnail": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=400&h=250",
-    "description": "Run for your life from the demon monkeys. Adventure awaits in the temple ruins."
-  },
-  {
-    "id": "baldi-minus-3",
-    "title": "-3",
-    "iframeUrl": "https://raw.githack.com/web-ports/baldi-mods/main/-3/index.html",
-    "category": "Horror",
-    "thumbnail": "https://images.unsplash.com/photo-1509248961158-e54f6934749c?auto=format&fit=crop&q=80&w=400&h=250",
-    "description": "A mysterious Baldi's Basics mod by Mauzer2137. Can you survive the -3 dimension?"
-  },
-  {
-    "id": "baldi-minus-b",
-    "title": "-b",
-    "iframeUrl": "https://raw.githack.com/web-ports/baldi-mods/main/-b/index.html",
-    "category": "Horror",
-    "thumbnail": "https://images.unsplash.com/photo-1626761591523-a60d032547b7?auto=format&fit=crop&q=80&w=400&h=250",
-    "description": "Another challenging Baldi's Basics experience. Face the rainbow of terror."
-  },
-  {
-    "id": "baldi-classic-remastered",
-    "title": "Baldi's Basics Classic Remastered",
-    "iframeUrl": "https://raw.githack.com/genizy/web-port/main/baldi-remaster/index.html",
-    "category": "Horror",
-    "thumbnail": "https://images.unsplash.com/photo-1549490349-8643362247b5?auto=format&fit=crop&q=80&w=400&h=250",
-    "description": "The classic Baldi's Basics experience, remastered for the web with improved performance and compatibility."
-  },
-  {
-    "id": "baldi-basics-plus",
-    "title": "Baldi's Basics Plus",
-    "iframeUrl": "https://raw.githack.com/genizy/web-port/main/baldi-plus/index.html",
-    "category": "Horror",
-    "thumbnail": "https://images.unsplash.com/photo-1594909122845-11baa439b7bf?auto=format&fit=crop&q=80&w=400&h=250",
-    "description": "The full Baldi's Basics Plus experience with procedural levels, more characters, and endless replayability."
-  },
-  {
-    "id": "baldi-ultra-decompile",
-    "title": "Baldi's Basics Ultra Decompile",
-    "iframeUrl": "https://raw.githack.com/bubbls/UGS-Assets/main/baldi%20decomp/index.html",
-    "category": "Horror",
-    "thumbnail": "https://images.unsplash.com/photo-1533929736458-ca588d08c8be?auto=format&fit=crop&q=80&w=400&h=250",
-    "description": "An ultra-decompiled version of Baldi's Basics, exploring the guts of the original horror game."
-  },
-  {
-    "id": "caseohs-basics",
-    "title": "CaseOh's Basics",
-    "iframeUrl": "https://raw.githack.com/bubbls/ports/main/baldi-caseoh/index.html",
-    "category": "Horror",
-    "thumbnail": "https://images.unsplash.com/photo-1594122230689-45899d9e6f69?auto=format&fit=crop&q=80&w=400&h=250",
-    "description": "CaseOh's Basics in Eating and Fast Food. A delicious yet terrifying twist on the Baldi formula."
-  },
-  {
-    "id": "jeffrey-epsteins-basics",
-    "title": "Jeffrey Epstein's Basics",
-    "iframeUrl": "https://raw.githack.com/bubbls/ports/main/jeffrey-epsteins-basics-in-education-and-kidnapping/index.html",
-    "category": "Horror",
-    "thumbnail": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=400&h=250",
-    "description": "A controversial and dark Baldi's Basics mod set in one of history's most infamous locations."
-  },
-  {
     "id": "bfdi-branches",
     "title": "BFDI Branches",
     "iframeUrl": "./src/games/bfdi-branches.html",
     "category": "Adventure",
     "thumbnail": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=400&h=250",
     "description": "Explore the branches of BFDI in this fan-made Godot adventure."
+  },
+  {
+    "id": "frickbears-3",
+    "title": "Frickbears 3",
+    "iframeUrl": "./src/games/frickbears-3.html",
+    "category": "Horror",
+    "thumbnail": "https://img.gamedistribution.com/5fd354b3e8e24c2598380d3cd355e48d-512x512.jpeg",
+    "description": "The third installment of the Frickbears saga. Can you survive the night?"
   }
 ]

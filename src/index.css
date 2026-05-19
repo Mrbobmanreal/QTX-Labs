@@ -29,6 +29,41 @@
   }
 
   --animate-bounce-steady: bounce-steady 0.6s ease-in-out infinite;
+  --animate-shimmer: shimmer 2s linear infinite;
+
+  @keyframes shimmer {
+    from { background-position: -200% 0; }
+    to { background-position: 200% 0; }
+  }
+}
+
+/* Support for dynamic viewports */
+@supports (height: 100dvh) {
+  .h-screen-dynamic {
+    height: 100dvh;
+  }
+  .min-h-screen-dynamic {
+    min-height: 100dvh;
+  }
+}
+
+/* Prevent overscroll bounce on mobile */
+html, body {
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@utility shimmer {
+  background: linear-gradient(90deg, #0c0c0c 25%, #1a1a1a 50%, #0c0c0c 75%);
+  background-size: 200% 100%;
+}
+
+@utility h-dvh {
+  height: 100dvh;
+}
+
+@utility min-h-dvh {
+  min-height: 100dvh;
 }
 
 @utility no-scrollbar {
