@@ -1,6 +1,6 @@
 {
-  "name": "QTX Labs",
-  "description": "The ultimate collection of unblocked web games by QTX Labs.",
+  "name": "QTX Labs Games",
+  "description": "Premium unblocked high-performance web games catalog featuring fast dynamic categories, local search, and immersive fullscreen gameplay.",
   "requestFramePermissions": ["fullscreen"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

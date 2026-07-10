@@ -3,6 +3,7 @@
 <!-- Note to web developers looking to add this to their website. This game can bug out and crash sometimes. Refresh the page if a crash is experienced -->
 <html lang="en-us">
 <head>
+    <base href="/api/game-proxy/sonic-mania/">
     <meta charset="utf-8" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -390,7 +391,7 @@
             FS.syncfs(false, function(err) {});
         });
     </script>
-    <script src="https://rawcdn.githack.com/UGBONTOP/Sonic-Mania-InYourBrowser/main/Data.js"></script>
-    <script async type="text/javascript" src="https://rawcdn.githack.com/UGBONTOP/Sonic-Mania-InYourBrowser/main/RSDKv5U.js"></script>
+    <script src="Data.js"></script>
+    <script async type="text/javascript" src="RSDKv5U.js"></script>
 </body>
 </html>

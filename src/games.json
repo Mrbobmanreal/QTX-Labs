@@ -1,5 +1,45 @@
 [
   {
+    "id": "nds-console",
+    "title": "Nintendo DS Emulator Console",
+    "iframeUrl": "EMULATOR_CONSOLE",
+    "category": "Nintendo DS",
+    "thumbnail": "https://images.unsplash.com/photo-1612287230202-1bf1d85d1bdf?auto=format&fit=crop&q=80&w=400&h=250",
+    "description": "Boot the full Nintendo DS console! Upload your own local .nds ROM files, manage offline save states, configure performance options, and hook up Dropbox cloud synchronization."
+  },
+  {
+    "id": "flappy-bird-nds",
+    "title": "Flappy Bird NDS",
+    "iframeUrl": "https://github.com/mizofito/FlappyBirdNDS/releases/download/v1.0/FlappyBirdNDS.nds",
+    "category": "Nintendo DS",
+    "thumbnail": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=400&h=250",
+    "description": "The addictive flapping classic, rebuilt perfectly from the ground up for native Nintendo DS hardware."
+  },
+  {
+    "id": "dscraft",
+    "title": "DS-Craft (Minecraft DS)",
+    "iframeUrl": "https://cdn.jsdelivr.net/gh/reeyuki/unblocked-roms@main/dscraft.nds",
+    "category": "Nintendo DS",
+    "thumbnail": "https://images.unsplash.com/photo-1605901309584-818e25960a8f?auto=format&fit=crop&q=80&w=400&h=250",
+    "description": "Explore, mine, and build in this impressive voxel-sandbox homebrew recreation of Minecraft for Nintendo DS."
+  },
+  {
+    "id": "cave-story-nds",
+    "title": "Cave Story DS",
+    "iframeUrl": "https://cdn.jsdelivr.net/gh/reeyuki/unblocked-roms@main/nxds.nds",
+    "category": "Nintendo DS",
+    "thumbnail": "https://images.unsplash.com/photo-1551103782-8ab07afd45c1?auto=format&fit=crop&q=80&w=400&h=250",
+    "description": "Run, jump, and shoot in the complete legendary action-adventure platformer Cave Story, ported to Nintendo DS."
+  },
+  {
+    "id": "plasma-nds",
+    "title": "Plasma Tech Demo",
+    "iframeUrl": "https://cdn.jsdelivr.net/gh/reeyuki/unblocked-roms@main/plasma.nds",
+    "category": "Nintendo DS",
+    "thumbnail": "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=400&h=250",
+    "description": "A high-performance interactive plasma fluid simulation demo showcasing the Nintendo DS 3D graphics hardware."
+  },
+  {
     "id": "ddlc",
     "title": "Doki Doki Literature Club!",
     "iframeUrl": "./src/games/doki-doki-literature-club.html",
@@ -44,7 +84,7 @@
     "title": "Tetris (GBA)",
     "iframeUrl": "./src/games/tetris.html",
     "category": "Puzzle",
-    "thumbnail": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/698780/header.jpg",
+    "thumbnail": "/src/assets/images/tetris_thumbnail_1779393470358.png",
     "description": "The classic puzzle experience reimagined for the advance generation."
   },
   {
@@ -106,7 +146,7 @@
   {
     "id": "bfdi-branches",
     "title": "BFDI Branches",
-    "iframeUrl": "https://playgroundfree.github.io/bfdi-branches/",
+    "iframeUrl": "/api/game-proxy/bfdi-branches/",
     "category": "Adventure",
     "thumbnail": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=400&h=250",
     "description": "Explore the branches of BFDI in this fan-made Godot adventure."
@@ -130,7 +170,7 @@
   {
     "id": "bfdia-5b",
     "title": "BFDIA 5b",
-    "iframeUrl": "https://coppersalts.github.io/HTML5b/",
+    "iframeUrl": "/api/game-proxy/bfdia-5b/",
     "category": "Puzzle",
     "thumbnail": "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&q=80&w=400&h=250",
     "description": "Play the HTML5 port of BFDIA 5b, the beloved puzzle platformer as seen in Battle for Dream Island!"
@@ -142,5 +182,45 @@
     "category": "Adventure",
     "thumbnail": "https://images.unsplash.com/photo-1560942485-b2a11cc13456?auto=format&fit=crop&q=80&w=400&h=250",
     "description": "WebBlox brick and block simulation engine. Fully self-hosted and unblocked via diagnostic tunnel bypass."
+  },
+  {
+    "id": "hollow-knight-silksong",
+    "title": "Hollow Knight: Silksong",
+    "iframeUrl": "./src/games/hollow-knight-silksong.html",
+    "category": "Platformer",
+    "thumbnail": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1030300/header.jpg",
+    "description": "Play the highly anticipated sequel to Hollow Knight. Explore a whole new kingdom of bugs, rules, and secrets, completely unblocked."
+  },
+  {
+    "id": "hollow-knight",
+    "title": "Hollow Knight",
+    "iframeUrl": "./src/games/hollow-knight.html",
+    "category": "Platformer",
+    "thumbnail": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/367520/header.jpg",
+    "description": "The award-winning action-adventure of insects and heroes. Forge your own path through a ruined kingdom of bugs and beasts."
+  },
+  {
+    "id": "gloomy",
+    "title": "Minecraft Java (gloomy.site)",
+    "iframeUrl": "https://gloomy.site/",
+    "category": "Arcade",
+    "thumbnail": "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&q=80&w=400&h=250",
+    "description": "High-performance unblocked web-port of Minecraft Java Edition. Experience full creative & survival crafting. Note: If the embedded player is blank, click the green 'OPEN IN NEW TAB' button!"
+  },
+  {
+    "id": "cuphead",
+    "title": "Cuphead",
+    "iframeUrl": "./src/games/cuphead.html",
+    "category": "Platformer",
+    "thumbnail": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/268910/header.jpg",
+    "description": "A classic run and gun action game heavily focused on boss battles. Recreated in Unity WebGL with active file-merging technology, playable fully unblocked."
+  },
+  {
+    "id": "caseoh-basics",
+    "title": "CaseOh's Basics in Eating and Fast Food",
+    "iframeUrl": "./src/games/caseoh-basics.html",
+    "category": "Horror",
+    "thumbnail": "https://images.unsplash.com/photo-1561758033-d89a9ad46330?auto=format&fit=crop&q=80&w=400&h=250",
+    "description": "A custom modification of Baldi's Basics. Navigate the fast-food academy, collect snacks, avoid CaseOh, and make a clean getaway!"
   }
 ]

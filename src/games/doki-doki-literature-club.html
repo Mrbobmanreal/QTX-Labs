@@ -11,7 +11,7 @@
         gtag('js', new Date());
         gtag('config', 'G-WX5VS54ZDW');
     </script>
-    <base href="https://cdn.jsdelivr.net/gh/genizy/google-class@d0cbe7c43047eb95d3c1455877387d540128e98e/dokidoki/">
+    <base href="/api/game-proxy/doki-doki-literature-club/">
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>Doki Doki Literature Club!</title>
@@ -251,12 +251,18 @@
         ]).then(([zipUrl]) => {
             // The URL to game.zip, relative to the URL of this file.
             window.gameZipURL = zipUrl;
-            // Register the service worker.
+            // Register the service worker safely with try/catch
             if (navigator.serviceWorker) {
-                if (!navigator.serviceWorker.controller) {
-                    navigator.serviceWorker.register('./service-worker.js', {
-                        updateViaCache: 'all'
-                    });
+                try {
+                    if (!navigator.serviceWorker.controller) {
+                        navigator.serviceWorker.register('./service-worker.js', {
+                            updateViaCache: 'all'
+                        }).catch(err => {
+                            console.warn("ServiceWorker registration rejected but ignored to allow RenPy scripts loading:", err);
+                        });
+                    }
+                } catch (e) {
+                    console.warn("ServiceWorker registration exception caught:", e);
                 }
             }
             const pre = document.createElement('script');

@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "vite build",
+    "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
+    "start": "node dist/server.cjs",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "eslint src"
@@ -28,6 +29,7 @@
     "@typescript-eslint/eslint-plugin": "^8.59.2",
     "@typescript-eslint/parser": "^8.59.2",
     "autoprefixer": "^10.4.21",
+    "esbuild": "^0.28.0",
     "eslint": "^9.39.4",
     "eslint-plugin-react": "^7.37.5",
     "tailwindcss": "^4.1.14",

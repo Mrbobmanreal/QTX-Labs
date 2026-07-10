@@ -1,30 +1,127 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <title>QTX Labs</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="./src/index.css">
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-              mono: ['JetBrains Mono', 'monospace'],
-            },
-          },
-        },
-      }
-    </script>
-  </head>
-  <body class="bg-[#0a0a0a] text-[#e5e5e5]">
-    <div id="app"></div>
-    <script type="module" src="./src/app.js"></script>
-  </body>
-</html>
+<html lang="en" class="h-full select-none">
 
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, viewport-fit=cover">
+    <link rel="apple-touch-icon" href="icon.png">
+    <title>QTX Labs - Premium Unblocked Games</title>
+    <meta name="description" content="QTX Labs is a collection of high-performance unblocked games playable instantly in your browser.">
+    <link rel="stylesheet" href="./src/index.css">
+</head>
+
+<body class="bg-[#050508] text-gray-100 font-sans min-h-full overflow-y-auto no-scrollbar">
+    <!-- Main Games Portal Container -->
+    <div id="welcome" class="min-h-screen flex flex-col p-4 md:p-8 bg-gradient-to-b from-[#0e0e16] via-[#050508] to-[#010103]">
+        
+        <!-- Header -->
+        <header class="w-full max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between border-b border-white/5 pb-6 mb-8 gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-[#00ff00] flex items-center justify-center font-mono font-black text-black text-xl shadow-[0_0_20px_rgba(0,255,0,0.3)]">
+                    🎮
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-black tracking-tight text-white uppercase font-mono">QTX <span class="text-[#00ff00]">LABS PORTAL</span></h1>
+                    <p class="text-xs text-gray-500 font-mono">Premium High-Performance Unblocked Games</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 text-xs font-mono">
+                <span class="flex items-center gap-1.5 text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    PORTAL ONLINE
+                </span>
+                <span class="text-gray-700">|</span>
+                <span id="ver-info" class="text-gray-400">Ver: 1.2.0</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="w-full max-w-6xl mx-auto flex-1 flex flex-col gap-8 pb-16">
+            
+            <!-- Controls: Search & Category Pills -->
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4 bg-white/[0.02] border border-white/5 rounded-2xl p-4 md:p-6 backdrop-blur-xl">
+                <!-- Search bar -->
+                <div class="relative w-full md:max-w-xs">
+                    <input id="game-search" oninput="window.filterGames()" type="text" placeholder="Search unblocked games..." class="w-full bg-black/50 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-xs font-mono focus:outline-none focus:border-[#00ff00]/50 text-white placeholder-gray-600 transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3.5 top-3.5 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+
+                <!-- Category Filters -->
+                <div id="category-filters" class="flex flex-wrap gap-2 w-full md:w-auto justify-start md:justify-end">
+                    <button onclick="window.selectCategory('All')" class="category-pill active bg-[#00ff00]/10 border border-[#00ff00]/30 text-[#00ff00] px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all">ALL</button>
+                    <button onclick="window.selectCategory('Visual Novel')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">VISUAL NOVEL</button>
+                    <button onclick="window.selectCategory('Platformer')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">PLATFORMER</button>
+                    <button onclick="window.selectCategory('Shooter')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">SHOOTER</button>
+                    <button onclick="window.selectCategory('Horror')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">HORROR</button>
+                    <button onclick="window.selectCategory('RPG')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">RPG</button>
+                    <button onclick="window.selectCategory('Puzzle')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">PUZZLE</button>
+                    <button onclick="window.selectCategory('Arcade')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">ARCADE</button>
+                    <button onclick="window.selectCategory('Adventure')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">ADVENTURE</button>
+                </div>
+            </div>
+
+            <!-- Games Grid -->
+            <div id="games-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                <!-- Populated dynamically via app.js -->
+            </div>
+        </main>
+
+        <!-- Terms Footer -->
+        <footer class="w-full max-w-6xl mx-auto text-center mt-auto text-[10px] text-gray-600 font-mono leading-relaxed pb-8 border-t border-white/5 pt-8">
+            <p>Your game sessions and temporary saves are processed 100% locally in your browser sandbox.</p>
+            <p class="mt-1">All game names, graphics, and trade marks are copyrights of their respective owners and builders. QTX is a self-contained web laboratory portal.</p>
+        </footer>
+    </div>
+
+    <!-- Full-Screen Unblocked Web Game Player View -->
+    <div id="game-player-container" hidden class="fixed inset-0 bg-black z-50 flex flex-col justify-between select-none">
+        <!-- Web Game Top Navigation Control Bar -->
+        <header class="bg-[#0e0e12] border-b border-white/10 px-4 py-3 flex items-center justify-between font-mono text-xs text-white">
+            <div class="flex items-center gap-3">
+                <button onclick="window.closeWebGame()" class="bg-red-500/10 border border-red-500/20 text-red-400 px-3.5 py-1.5 rounded-lg font-bold hover:bg-red-500 hover:text-white transition-all cursor-pointer">
+                    &larr; EXIT GAME
+                </button>
+                <span id="game-player-title" class="font-bold uppercase tracking-wider text-sm text-[#00ff00] ml-2">Loading Game...</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <a id="game-external-link" href="#" target="_blank" rel="noopener noreferrer" class="bg-[#00ff00]/15 border border-[#00ff00]/30 hover:bg-[#00ff00] hover:text-black hover:border-transparent text-[#00ff00] px-3.5 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1">
+                    🚀 OPEN IN NEW TAB
+                </a>
+                <button onclick="window.reloadWebGame()" class="bg-white/5 border border-white/10 hover:bg-white/10 hover:text-[#00ff00] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer">
+                    🔄 RELOAD
+                </button>
+                <button onclick="window.toggleWebGameFullscreen()" class="bg-white/5 border border-white/10 hover:bg-white/10 hover:text-[#00ff00] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer">
+                    🖥 FULLSCREEN
+                </button>
+            </div>
+        </header>
+
+        <!-- Loading Spinner overlay inside iframe -->
+        <div id="game-iframe-loader" class="absolute inset-0 top-[49px] flex flex-col items-center justify-center bg-black z-40 p-6 text-center">
+            <span class="inline-block animate-spin border-4 border-[#00ff00] border-t-transparent w-10 h-10 rounded-full mb-3"></span>
+            <p class="font-mono text-xs text-[#00ff00] uppercase tracking-widest animate-pulse">Establishing game bypass tunnel...</p>
+            <p id="iframe-connection-hint" class="font-mono text-[10px] text-gray-500 max-w-sm mt-4 leading-relaxed hidden">
+                Note: Some external game ports (like <span class="text-white">gloomy.site</span>) restrict embedded browser nesting. If you see a blank screen or connection refusal, click the green <span class="text-[#00ff00]">🚀 OPEN IN NEW TAB</span> button above to run the game directly!
+            </p>
+        </div>
+
+        <!-- The actual game iframe element -->
+        <iframe id="game-iframe" class="w-full flex-1 border-none bg-black" allow="autoplay; gamepad; fullscreen; keyboard" allowfullscreen></iframe>
+    </div>
+
+    <!-- Active Notification System Layer -->
+    <div id="msg-layer" hidden class="fixed left-1/2 -translate-x-1/2 top-10 z-50 pointer-events-none transition-all">
+        <div class="bg-black/90 border border-[#00ff00]/30 text-[#00ff00] px-4 py-2 rounded-xl shadow-2xl backdrop-blur-md font-mono text-xs flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-[#00ff00] animate-ping"></span>
+            <span id="msg-text"></span>
+        </div>
+    </div>
+
+    <!-- Dependencies and runtime loader -->
+    <script type="module" src="./src/app.js"></script>
+</body>
+
+</html>
