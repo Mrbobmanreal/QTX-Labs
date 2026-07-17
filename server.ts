@@ -1,9 +1,11 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
 import { GoogleGenAI } from "@google/genai";
+import { Readable } from "stream";
 
 dotenv.config();
 
@@ -24,7 +26,8 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json());
+  app.use(express.json({ limit: '15mb' }));
+  app.use(express.urlencoded({ limit: '15mb', extended: true }));
 
   // Nintendo DS Emulator Proxy Helper
   const proxyDSFile = async (reqPath: string, res: express.Response) => {
@@ -101,11 +104,11 @@ async function startServer() {
   const GAME_CDN_MAPS: Record<string, string> = {
     "miside": "https://cdn.jsdelivr.net/gh/web-ports/miside@main/",
     "fpn": "https://rawcdn.githack.com/bubbls/ports/main/fpn-FULLY_RECRAFTED-web/",
-    "undertale-yellow": "https://cdn.jsdelivr.net/gh/genizy/web-port@main/undertale-yellow/",
+    "undertale-yellow": "https://raw.githubusercontent.com/genizy/web-port/main/undertale-yellow/",
     "crazy-chicken-3d": "https://rawcdn.githack.com/gn-math/assets/main/255/",
-    "pizza-tower": "https://cdn.jsdelivr.net/gh/genizy/web-port@main/pizza-tower/",
-    "crazy-cattle-3d": "https://rawcdn.githack.com/genizy/cc3d-mobile/main/",
-    "doki-doki-literature-club": "https://cdn.jsdelivr.net/gh/genizy/google-class@d0cbe7c43047eb95d3c1455877387d540128e98e/dokidoki/",
+    "pizza-tower": "https://raw.githubusercontent.com/genizy/web-port/main/pizza-tower/",
+    "crazy-cattle-3d": "https://raw.githubusercontent.com/genizy/cc3d-mobile/main/",
+    "doki-doki-literature-club": "https://raw.githubusercontent.com/genizy/google-class/d0cbe7c43047eb95d3c1455877387d540128e98e/dokidoki/",
     "super-mario-64": "https://rawcdn.githack.com/ArkShocer/sm64/main/",
     "fnaw": "https://rawcdn.githack.com/bubbls/UGS-Assets/main/FNAW-main/",
     "helltaker": "https://cdn.jsdelivr.net/gh/wasm-rip/HellTaker-Web@main/helltakerweb/",
@@ -113,7 +116,7 @@ async function startServer() {
     "frickbears-3": "https://cdn.jsdelivr.net/gh/reeyuki/frickbears3port@4e185a27651d1d331a2e37f40f3d4e7a431b5b03/",
     "bfdi-branches": "https://playgroundfree.github.io/bfdi-branches/",
     "bfdia-5b": "https://coppersalts.github.io/HTML5b/",
-    "deltarune": "https://rawcdn.githack.com/genizy/web-port/1102f068fff0083d2a5ed979ebac6425540d78a5/deltarune/",
+    "deltarune": "https://raw.githubusercontent.com/genizy/web-port/main/deltarune/",
     "emulatorjs": "https://cdn.jsdelivr.net/gh/a456pur/seraph@81f551ca0aa8e3d6018d32d8ac5904ac9bc78f76/storage/emulatorjs/data/",
     "tetris-rom": "https://cdn.jsdelivr.net/gh/bubbls/UGS-file-encryption@c39521ba7e7523bc039606d7befe445d2929c916/",
     "cuphead": "https://cdn.jsdelivr.net/gh/web-ports/cuphead@c9ff1b6b16f9d402b78a42fc2200e1c076c0ab6e/",
@@ -177,8 +180,12 @@ async function startServer() {
       res.setHeader("Access-Control-Allow-Origin", "*");
       res.setHeader("Service-Worker-Allowed", `/api/game-proxy/${gameId}/`);
 
-      const buffer = await response.arrayBuffer();
-      res.send(Buffer.from(buffer));
+      if (response.body) {
+        Readable.fromWeb(response.body as any).pipe(res);
+      } else {
+        const buffer = await response.arrayBuffer();
+        res.send(Buffer.from(buffer));
+      }
     } catch (error: any) {
       console.error(`[PROXY ERROR] gameId=${gameId}:`, error);
       res.status(500).send(`Proxy Error: ${error.message}`);
@@ -217,9 +224,12 @@ async function startServer() {
       res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
       res.setHeader("Access-Control-Allow-Origin", "*");
 
-      // Pipe the body buffer to Express response
-      const buffer = await response.arrayBuffer();
-      res.send(Buffer.from(buffer));
+      if (response.body) {
+        Readable.fromWeb(response.body as any).pipe(res);
+      } else {
+        const buffer = await response.arrayBuffer();
+        res.send(Buffer.from(buffer));
+      }
     } catch (error: any) {
       console.error("WebBlox Proxy Error:", error);
       res.status(500).send(`WebBlox Proxy Error: ${error.message}`);
@@ -266,6 +276,428 @@ async function startServer() {
         res.status(404).send(`Game file ${req.params.gameFile}.html not found on this server`);
       }
     });
+  });
+
+  // Generic secure proxy for JSDelivr and raw CDN HTML files
+  app.get("/api/raw-proxy", async (req, res) => {
+    const targetUrl = req.query.url as string;
+    if (!targetUrl) {
+      return res.status(400).send("url query parameter is required");
+    }
+
+    // Security check: Only allow safe domains
+    const allowedDomains = ["jsdelivr.net", "githubusercontent.com", "githack.com"];
+    const isAllowed = allowedDomains.some(domain => targetUrl.includes(domain));
+    if (!isAllowed) {
+      return res.status(403).send("Forbidden proxy target");
+    }
+
+    try {
+      const response = await fetch(targetUrl);
+      if (!response.ok) {
+        return res.status(response.status).send(`Failed to fetch upstream: ${response.statusText}`);
+      }
+
+      let content = await response.text();
+
+      // Only inject base tag if one is not already present in the HTML
+      const hasBaseTag = /<base\s+/i.test(content);
+      let baseTag = "";
+      if (!hasBaseTag) {
+        const baseHref = targetUrl.substring(0, targetUrl.lastIndexOf("/") + 1);
+        baseTag = `<base href="${baseHref}">`;
+      }
+      
+      // Inject our standard ad-blocker CSS and Google Analytics hider directly
+      const adHiderStyle = `
+<style>
+  #sidebarad1, #sidebarad2, [id*="sidebarad"], [class*="sidebarad"], 
+  .adsbygoogle, iframe[src*="googleads"], div[class*="ad-"], div[id*="ad-"], 
+  [id*="banner-ad"], [class*="banner-ad"], #anchor-ad, .ad-slot, .ad-container, 
+  .ads-wrapper, #ad-slot, .adbanner, #adbanner, .google-ads, #sidebar-ad, .sidebar-ad {
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    width: 0px !important;
+    height: 0px !important;
+    max-width: 0px !important;
+    max-height: 0px !important;
+  }
+</style>
+`;
+
+      // Clean Google Tag Manager and other ads/trackers
+      content = content.replace(/<script[^>]*src="[^"]*googletagmanager[^"]*"[^>]*><\/script>/gi, '');
+      content = content.replace(/<script[^>]*src="[^"]*googlesyndication[^"]*"[^>]*><\/script>/gi, '');
+      content = content.replace(/<script[^>]*src="[^"]*googleadservices[^"]*"[^>]*><\/script>/gi, '');
+      content = content.replace(/<script[^>]*src="[^"]*pagead[^"]*"[^>]*><\/script>/gi, '');
+      content = content.replace(/<script[^>]*src="[^"]*adsserving[^"]*"[^>]*><\/script>/gi, '');
+
+      // Inject base tag and styles into the <head>
+      if (content.toLowerCase().includes('<head>')) {
+        content = content.replace(/<head>/i, '<head>' + baseTag + adHiderStyle);
+      } else {
+        content = baseTag + adHiderStyle + content;
+      }
+
+      // Also set correct headers to allow standard execution
+      res.setHeader("content-type", "text/html; charset=utf-8");
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.send(content);
+    } catch (err: any) {
+      console.error(`Error in /api/raw-proxy for ${targetUrl}:`, err);
+      res.status(500).send(`Proxy error: ${err.message}`);
+    }
+  });
+
+  // --- REAL-TIME ANONYMOUS CHAT SYSTEM ---
+  const MESSAGES_FILE = path.join(process.cwd(), "chat_messages.json");
+  const NAMES_FILE = path.join(process.cwd(), "taken_names.json");
+  let messagesStore: any[] = [];
+  let takenNamesStore: Record<string, string> = {}; // username (lowercase) -> pin/key
+
+  try {
+    if (fs.existsSync(MESSAGES_FILE)) {
+      const fileContent = fs.readFileSync(MESSAGES_FILE, "utf8");
+      messagesStore = JSON.parse(fileContent);
+    } else {
+      // Welcome message in global room
+      messagesStore = [
+        {
+          id: "msg-welcome-1",
+          room: "global",
+          username: "System",
+          text: "Welcome to the unblocked QTX anonymous board! Share your thoughts, strategies, and games here. You don't need to register or log in, just like 4chan.",
+          timestamp: Date.now() - 60000,
+          color: "#00ff00"
+        }
+      ];
+      fs.writeFileSync(MESSAGES_FILE, JSON.stringify(messagesStore, null, 2), "utf8");
+    }
+  } catch (err) {
+    console.error("Error loading chat messages file, using empty in-memory store:", err);
+    messagesStore = [];
+  }
+
+  try {
+    if (fs.existsSync(NAMES_FILE)) {
+      takenNamesStore = JSON.parse(fs.readFileSync(NAMES_FILE, "utf8"));
+    }
+  } catch (err) {
+    console.error("Error loading taken names store:", err);
+    takenNamesStore = {};
+  }
+
+  // Function to save messages to file safely
+  const saveMessagesToFile = () => {
+    try {
+      fs.writeFile(MESSAGES_FILE, JSON.stringify(messagesStore, null, 2), "utf8", (err) => {
+        if (err) console.error("Error writing messages file:", err);
+      });
+    } catch (err) {
+      console.error("Error in saveMessagesToFile:", err);
+    }
+  };
+
+  const saveNamesToFile = () => {
+    try {
+      fs.writeFileSync(NAMES_FILE, JSON.stringify(takenNamesStore, null, 2), "utf8");
+    } catch (err) {
+      console.error("Error writing names file:", err);
+    }
+  };
+
+  // Helper to post an automated system notification
+  const postSystemNotification = (room: string, text: string) => {
+    const sysMsg = {
+      id: "msg-system-" + Date.now() + "-" + Math.random().toString(36).substring(2, 7),
+      room: room.toLowerCase(),
+      username: "System Alert",
+      text: text,
+      avatar: "🚨",
+      image: null,
+      timestamp: Date.now(),
+      color: "#ff3333"
+    };
+    messagesStore.push(sysMsg);
+    saveMessagesToFile();
+  };
+
+  // Helper to fetch remote image and convert to Base64
+  const fetchImageBase64 = async (url: string): Promise<{ mimeType: string; data: string } | null> => {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const buf = await res.arrayBuffer();
+      const mimeType = res.headers.get("content-type") || "image/png";
+      const data = Buffer.from(buf).toString("base64");
+      return { mimeType, data };
+    } catch (e) {
+      console.error("Error fetching image URL for moderation:", e);
+      return null;
+    }
+  };
+
+  // AI content moderation using Gemini 3.5 Flash
+  const checkNSFWImage = async (imageInput: string): Promise<{ nsfw: boolean; reason?: string }> => {
+    try {
+      if (!process.env.GEMINI_API_KEY) {
+        console.warn("No GEMINI_API_KEY set. Skipping safety content moderation.");
+        return { nsfw: false };
+      }
+
+      let mimeType = "image/png";
+      let data = "";
+
+      if (imageInput.startsWith("data:image/")) {
+        const match = imageInput.match(/^data:([^;]+);base64,(.*)$/);
+        if (!match) return { nsfw: false };
+        mimeType = match[1];
+        data = match[2];
+      } else if (imageInput.startsWith("http://") || imageInput.startsWith("https://")) {
+        const fetched = await fetchImageBase64(imageInput);
+        if (!fetched) return { nsfw: false };
+        mimeType = fetched.mimeType;
+        data = fetched.data;
+      } else {
+        return { nsfw: false };
+      }
+
+      const imagePart = {
+        inlineData: {
+          mimeType,
+          data
+        }
+      };
+
+      const textPart = {
+        text: "Analyze this image. You are a content moderation assistant. Check if the image contains explicit pornography, adult content, nudity, or sexually explicit content (NSFW/porn). Answer strictly in JSON format: {\"nsfw\": true, \"reason\": \"explanation of nsfw content\"} or {\"nsfw\": false}."
+      };
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: { parts: [imagePart, textPart] },
+        config: {
+          responseMimeType: "application/json"
+        }
+      });
+
+      const text = response.text || "{}";
+      const result = JSON.parse(text.trim());
+      return {
+        nsfw: !!result.nsfw,
+        reason: result.reason || "Prohibited explicit content"
+      };
+    } catch (error) {
+      console.error("Safety scan failed, skipping to prevent blocking false positives:", error);
+      return { nsfw: false };
+    }
+  };
+
+  // Get messages for a specific room
+  app.get("/api/chat/messages", (req, res) => {
+    const room = (req.query.room as string) || "global";
+    const normalizedRoom = room.toLowerCase();
+    const roomMsgs = messagesStore.filter(m => m.room === normalizedRoom);
+    
+    const pinnedMsgs = roomMsgs.filter(m => m.pinned === true);
+    const recentMsgs = roomMsgs.slice(-150);
+
+    res.json({
+      messages: recentMsgs,
+      pinned: pinnedMsgs
+    });
+  });
+
+  // Protect / take a name
+  app.post("/api/chat/register-name", (req, res) => {
+    const { username, key } = req.body;
+    if (!username || typeof username !== "string" || username.trim() === "") {
+      return res.status(400).json({ error: "Username is required." });
+    }
+    if (!key || typeof key !== "string" || key.trim() === "") {
+      return res.status(400).json({ error: "PIN/Key is required." });
+    }
+
+    const lowerName = username.trim().toLowerCase();
+    
+    // Check if name is reserved
+    if (lowerName === "system" || lowerName === "moderator" || lowerName === "admin" || lowerName === "board moderator" || lowerName === "system alert") {
+      return res.status(400).json({ error: "This name is reserved by the system." });
+    }
+
+    if (takenNamesStore[lowerName]) {
+      return res.status(409).json({ error: "This name is already claimed by another user." });
+    }
+
+    takenNamesStore[lowerName] = key.trim();
+    saveNamesToFile();
+    res.json({ success: true, message: `Name '${username.trim()}' successfully protected!` });
+  });
+
+  // Admin delete message endpoint
+  app.post("/api/chat/delete-message", (req, res) => {
+    const { id, isSelfDelete } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ error: "Message ID is required." });
+    }
+
+    const index = messagesStore.findIndex(m => m.id === id);
+    if (index === -1) {
+      return res.status(404).json({ error: "Message not found." });
+    }
+
+    const msg = messagesStore[index];
+
+    messagesStore.splice(index, 1);
+    saveMessagesToFile();
+
+    // Post system alert that message was removed
+    const deletedBy = isSelfDelete ? "the author" : "a Board Moderator";
+    postSystemNotification(msg.room || "global", `Post No. ${msg.timestamp % 100000000} was deleted by ${deletedBy}.`);
+
+    res.json({ success: true });
+  });
+
+  // Admin pin/unpin message endpoint
+  app.post("/api/chat/pin-message", (req, res) => {
+    const { id } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ error: "Message ID is required." });
+    }
+
+    const msg = messagesStore.find(m => m.id === id);
+    if (!msg) {
+      return res.status(404).json({ error: "Message not found." });
+    }
+
+    msg.pinned = !msg.pinned;
+    saveMessagesToFile();
+
+    // Post system alert that message was pinned/unpinned
+    const status = msg.pinned ? "pinned" : "unpinned";
+    postSystemNotification(msg.room || "global", `Post No. ${msg.timestamp % 100000000} was ${status} by a Board Moderator.`);
+
+    res.json({ success: true, pinned: msg.pinned });
+  });
+
+  // Create custom room endpoint
+  app.post("/api/chat/create-room", (req, res) => {
+    const { roomName, username } = req.body;
+    if (!roomName || typeof roomName !== "string" || roomName.trim() === "") {
+      return res.status(400).json({ error: "Room name is required." });
+    }
+
+    const normalizedRoom = roomName.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    if (!normalizedRoom) {
+      return res.status(400).json({ error: "Invalid room name. Letters, numbers, hyphens, and underscores only." });
+    }
+
+    if (normalizedRoom === "global") {
+      return res.status(400).json({ error: "Room 'global' already exists." });
+    }
+
+    // Check if room already has messages
+    const roomExists = messagesStore.some(m => m.room === normalizedRoom);
+    if (roomExists) {
+      return res.json({ success: true, room: normalizedRoom, message: `Room #${normalizedRoom} already active!` });
+    }
+
+    // Post system welcome message to create the room
+    const creator = username ? username.trim() : "Gamer";
+    postSystemNotification(normalizedRoom, `Welcome to the custom channel #${normalizedRoom}! Created by @${creator}.`);
+
+    res.json({ success: true, room: normalizedRoom, message: `Room #${normalizedRoom} successfully created!` });
+  });
+
+  // Post a new message
+  app.post("/api/chat/messages", async (req, res) => {
+    const { room, username, text, avatar, banner, image, video, key, displayName, bio, fileData, fileName, fileSize, fileType } = req.body;
+    if (!text && !image && !video && !fileData) {
+      return res.status(400).json({ error: "Message text, image, video, or file is required" });
+    }
+
+    const cleanedRoom = (room && typeof room === "string" && room.trim() !== "") ? room.trim().toLowerCase() : "global";
+    const cleanedUsername = (username && typeof username === "string" && username.trim() !== "") ? username.trim() : "Anonymous";
+
+    const trimmedUsername = cleanedUsername.substring(0, 30);
+    const trimmedText = text ? text.substring(0, 2000) : "";
+
+    const lowerName = trimmedUsername.trim().toLowerCase();
+
+    // 1. Name taking protection check
+    if (takenNamesStore[lowerName]) {
+      if (!key || key.trim() !== takenNamesStore[lowerName]) {
+        return res.status(403).json({ 
+          error: "Name protection active", 
+          message: `The name '${trimmedUsername}' is protected. Please enter the correct PIN in your profile card to use it.` 
+        });
+      }
+    }
+
+    // 2. NSFW AI Content Moderation Check
+    if (image) {
+      const isUrl = image.startsWith("http://") || image.startsWith("https://") || image.startsWith("data:image/");
+      if (isUrl) {
+        const safetyResult = await checkNSFWImage(image);
+        if (safetyResult.nsfw) {
+          // Log automated system warnings in channel so everyone knows safety policies are active!
+          postSystemNotification(cleanedRoom, `Blocked explicit image content from user '${trimmedUsername}'. This user has been warned.`);
+          
+          return res.status(400).json({
+            error: "NSFW content detected",
+            warning: "WARNING: Your post was blocked because explicit pornography or adult content (NSFW) was detected. Please keep the board clean to avoid being banned.",
+            reason: safetyResult.reason
+          });
+        }
+      }
+    }
+
+    // Color list for nice design accents
+    const colors = ["#00ff00", "#ff007f", "#33ccff", "#ffcc00", "#ff33ff", "#00ffff", "#ff6600", "#b366ff", "#00ffcc"];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+
+    const newMessage = {
+      id: "msg-" + Date.now() + "-" + Math.random().toString(36).substring(2, 7),
+      room: cleanedRoom,
+      username: trimmedUsername,
+      displayName: (displayName && typeof displayName === "string") ? displayName.substring(0, 50) : trimmedUsername,
+      bio: (bio && typeof bio === "string") ? bio.substring(0, 160) : "No bio written yet. 🎮",
+      text: trimmedText,
+      avatar: avatar || "👾",
+      banner: (banner && typeof banner === "string") ? banner : null,
+      image: image || null,
+      video: video || null,
+      fileData: fileData || null,
+      fileName: fileName || null,
+      fileSize: fileSize || null,
+      fileType: fileType || null,
+      timestamp: Date.now(),
+      color
+    };
+
+    messagesStore.push(newMessage);
+    
+    // Safety limit: only keep last 5000 messages globally across the entire board to manage memory/disk space
+    if (messagesStore.length > 5000) {
+      messagesStore = messagesStore.slice(-4000);
+    }
+
+    saveMessagesToFile();
+    res.status(201).json(newMessage);
+  });
+
+  // Get active rooms and their counts
+  app.get("/api/chat/rooms", (req, res) => {
+    const counts: Record<string, number> = { global: 0 };
+    messagesStore.forEach(m => {
+      const r = m.room || "global";
+      counts[r] = (counts[r] || 0) + 1;
+    });
+    res.json(counts);
   });
 
   // Vite middleware for development

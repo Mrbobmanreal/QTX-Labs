@@ -126,3 +126,238 @@ html:-moz-full-screen #modal-container {
   border-radius: 0px !important;
 }
 
+/* --- LIGHT THEME STYLING OVERRIDES --- */
+body.light-theme {
+  background-color: #f1f5f9 !important; /* light slate background */
+  color: #1e293b !important; /* slate-800 */
+}
+
+#welcome {
+  background-image: radial-gradient(circle at top, #0e0e16, #050508, #010103);
+  background-attachment: fixed;
+}
+
+body.light-theme #welcome {
+  background-image: none;
+  background-color: #f8fafc;
+}
+
+body.light-theme header {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+body.light-theme header h1 {
+  color: #0f172a !important; /* slate-900 */
+}
+
+body.light-theme header p {
+  color: #64748b !important; /* slate-500 */
+}
+
+body.light-theme #ver-info {
+  color: #64748b !important;
+}
+
+body.light-theme footer {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  color: #64748b !important;
+}
+
+/* Search and Controls in light mode */
+body.light-theme .bg-white\/\\[0\.02\\] {
+  background-color: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+body.light-theme #game-search {
+  background-color: #f1f5f9 !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  color: #0f172a !important;
+}
+
+body.light-theme #game-search::placeholder {
+  color: #94a3b8 !important;
+}
+
+body.light-theme #game-search + svg {
+  color: #64748b !important;
+}
+
+/* Category pills in light mode */
+body.light-theme .category-pill:not(.active) {
+  background-color: #e2e8f0 !important;
+  border-color: rgba(0, 0, 0, 0.05) !important;
+  color: #475569 !important;
+}
+
+body.light-theme .category-pill:not(.active):hover {
+  background-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+body.light-theme .category-pill.active {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  color: #047857 !important;
+}
+
+/* Games Grid Cards in light mode */
+body.light-theme #games-grid .group {
+  background-color: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+}
+
+body.light-theme #games-grid .group:hover {
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04) !important;
+}
+
+body.light-theme #games-grid .group h3 {
+  color: #0f172a !important;
+}
+
+body.light-theme #games-grid .group p {
+  color: #475569 !important;
+}
+
+/* Tab selector in light mode */
+body.light-theme .tab-container {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+body.light-theme .tab-btn:not(.active) {
+  color: #475569 !important;
+}
+
+body.light-theme .tab-btn:not(.active):hover {
+  color: #0f172a !important;
+}
+
+body.light-theme .tab-btn.active {
+  background-color: #ffffff !important;
+  color: #047857 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* News cards in light mode */
+body.light-theme .news-card {
+  background-color: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+}
+
+body.light-theme .news-card h3 {
+  color: #0f172a !important;
+}
+
+body.light-theme .news-card p {
+  color: #475569 !important;
+}
+
+body.light-theme .news-card:hover {
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+/* Settings cards in light mode */
+body.light-theme .settings-card {
+  background-color: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+}
+
+body.light-theme .settings-card h3 {
+  color: #0f172a !important;
+}
+
+body.light-theme .settings-card p {
+  color: #475569 !important;
+}
+
+body.light-theme .settings-card .bg-black\/40 {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+body.light-theme #theme-btn-dark:not(.bg-white\/10) {
+  color: #475569 !important;
+}
+
+body.light-theme #theme-btn-dark:not(.bg-white\/10):hover {
+  color: #0f172a !important;
+}
+
+body.light-theme #theme-btn-dark.bg-white\/10 {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+body.light-theme #theme-btn-light:not(.bg-white\/10) {
+  color: #475569 !important;
+}
+
+body.light-theme #theme-btn-light:not(.bg-white\/10):hover {
+  color: #0f172a !important;
+}
+
+body.light-theme #theme-btn-light.bg-white\/10 {
+  background-color: #ffffff !important;
+  color: #047857 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+body.light-theme .settings-card .bg-black\/20 {
+  background-color: #f8fafc !important;
+  border-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Custom data and settings sub-blocks in light mode */
+body.light-theme .settings-card .bg-black\/35 {
+  background-color: #f8fafc !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+body.light-theme .settings-card h4 {
+  color: #1e293b !important;
+}
+
+body.light-theme .settings-card .bg-black\/20 .bg-black\/10 {
+  background-color: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+body.light-theme .settings-card .text-white {
+  color: #0f172a !important;
+}
+
+body.light-theme .settings-card .text-gray-500 {
+  color: #64748b !important;
+}
+
+/* Custom JSON paste modal in light mode */
+body.light-theme #custom-json-modal .bg-\[\#0f0f15\] {
+  background-color: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  color: #0f172a !important;
+}
+
+body.light-theme #custom-json-modal p {
+  color: #475569 !important;
+}
+
+body.light-theme #custom-json-modal textarea {
+  background-color: #f1f5f9 !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  color: #0f172a !important;
+}
+
+body.light-theme #custom-json-modal pre {
+  background-color: #f8fafc !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  color: #047857 !important;
+}
+
+
+

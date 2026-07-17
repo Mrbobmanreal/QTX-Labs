@@ -100,7 +100,18 @@
       if (/rblx\.data$/.test(url)) {
         return chunksPromise.then(function (blobUrl) { return _origFetch(blobUrl, init); });
       }
+      if (url.includes('rblx.wasm')) {
+        return _origFetch('/api/webblox-proxy?file=rblx.wasm', init);
+      }
       return _origFetch(resource, init);
+    };
+
+    var _origOpen = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function (method, url, ...rest) {
+      if (typeof url === 'string' && url.includes("rblx.wasm")) {
+        url = "/api/webblox-proxy?file=rblx.wasm";
+      }
+      return _origOpen.call(this, method, url, ...rest);
     };
 
     window.Module = {

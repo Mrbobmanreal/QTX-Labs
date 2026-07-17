@@ -11,19 +11,33 @@
 </head>
 
 <body class="bg-[#050508] text-gray-100 font-sans min-h-full overflow-y-auto no-scrollbar">
+    <!-- Retro Corner Companions (Decorative GIF/Animations) -->
+    <div id="corner-companion-left" class="fixed top-2 left-2 z-[90] pointer-events-none transition-all duration-300 w-12 h-12 md:w-16 md:h-16 flex items-center justify-center filter drop-shadow-[0_0_8px_rgba(0,255,0,0.2)]"></div>
+    <div id="corner-companion-right" class="fixed top-2 right-2 z-[90] pointer-events-none transition-all duration-300 w-12 h-12 md:w-16 md:h-16 flex items-center justify-center filter drop-shadow-[0_0_8px_rgba(0,255,0,0.2)]"></div>
+
     <!-- Main Games Portal Container -->
-    <div id="welcome" class="min-h-screen flex flex-col p-4 md:p-8 bg-gradient-to-b from-[#0e0e16] via-[#050508] to-[#010103]">
+    <div id="welcome" class="min-h-screen flex flex-col p-4 md:p-8">
         
         <!-- Header -->
         <header class="w-full max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between border-b border-white/5 pb-6 mb-8 gap-4">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-[#00ff00] flex items-center justify-center font-mono font-black text-black text-xl shadow-[0_0_20px_rgba(0,255,0,0.3)]">
-                    🎮
+            <div class="flex flex-col sm:flex-row items-center gap-6 w-full md:w-auto">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-[#00ff00] flex items-center justify-center font-mono font-black text-black text-xl shadow-[0_0_20px_rgba(0,255,0,0.3)]">
+                        🎮
+                    </div>
+                    <div>
+                        <h1 class="text-xl md:text-2xl font-black tracking-tight text-white uppercase font-mono">QTX <span class="text-[#00ff00]">LABS</span></h1>
+                        <p id="inventory-count" class="text-xs text-gray-500 font-mono">Premium High-Performance Unblocked Games</p>
+                    </div>
                 </div>
-                <div>
-                    <h1 class="text-xl md:text-2xl font-black tracking-tight text-white uppercase font-mono">QTX <span class="text-[#00ff00]">LABS PORTAL</span></h1>
-                    <p class="text-xs text-gray-500 font-mono">Premium High-Performance Unblocked Games</p>
-                </div>
+                
+                <!-- Main Navigation Tabs -->
+                <nav class="tab-container flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl p-1 font-mono text-xs">
+                    <button onclick="window.switchTab('games')" id="tab-games" class="tab-btn active px-4 py-2 rounded-lg font-bold transition-all text-[#00ff00] bg-white/10 cursor-pointer">GAMES</button>
+                    <button onclick="window.switchTab('news')" id="tab-news" class="tab-btn px-4 py-2 rounded-lg font-bold transition-all text-gray-400 hover:text-white cursor-pointer">NEWS</button>
+                    <button onclick="window.switchTab('settings')" id="tab-settings" class="tab-btn px-4 py-2 rounded-lg font-bold transition-all text-gray-400 hover:text-white cursor-pointer">SETTINGS</button>
+                    <button onclick="window.switchTab('chat')" id="tab-chat" class="tab-btn px-4 py-2 rounded-lg font-bold transition-all text-gray-400 hover:text-white cursor-pointer relative">CHATROOM <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[7px] px-1 rounded-full uppercase scale-90 font-mono tracking-widest animate-pulse font-bold">LIVE</span></button>
+                </nav>
             </div>
 
             <div class="flex items-center gap-3 text-xs font-mono">
@@ -39,33 +53,512 @@
         <!-- Main Content -->
         <main class="w-full max-w-6xl mx-auto flex-1 flex flex-col gap-8 pb-16">
             
-            <!-- Controls: Search & Category Pills -->
-            <div class="flex flex-col md:flex-row items-center justify-between gap-4 bg-white/[0.02] border border-white/5 rounded-2xl p-4 md:p-6 backdrop-blur-xl">
-                <!-- Search bar -->
-                <div class="relative w-full md:max-w-xs">
-                    <input id="game-search" oninput="window.filterGames()" type="text" placeholder="Search unblocked games..." class="w-full bg-black/50 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-xs font-mono focus:outline-none focus:border-[#00ff00]/50 text-white placeholder-gray-600 transition-all duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3.5 top-3.5 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+            <!-- Games Tab View -->
+            <div id="view-games" class="tab-view flex flex-col gap-8">
+                <!-- Controls: Search & Category Pills -->
+                <div class="flex flex-col md:flex-row items-center justify-between gap-4 bg-white/[0.02] border border-white/5 rounded-2xl p-4 md:p-6 backdrop-blur-xl">
+                    <!-- Search bar -->
+                    <div class="relative w-full md:max-w-xs">
+                        <input id="game-search" oninput="window.filterGames()" type="text" placeholder="Search unblocked games..." class="w-full bg-black/50 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-xs font-mono focus:outline-none focus:border-[#00ff00]/50 text-white placeholder-gray-600 transition-all duration-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3.5 top-3.5 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+
+                    <!-- Category Filters -->
+                    <div id="category-filters" class="flex flex-wrap gap-2 w-full md:w-auto justify-start md:justify-end">
+                        <button onclick="window.selectCategory('All')" class="category-pill active bg-[#00ff00]/10 border border-[#00ff00]/30 text-[#00ff00] px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all">ALL</button>
+                        <button onclick="window.selectCategory('Favorites')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">❤️ FAVORITES</button>
+                        <button onclick="window.selectCategory('Visual Novel')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">VISUAL NOVEL</button>
+                        <button onclick="window.selectCategory('Platformer')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">PLATFORMER</button>
+                        <button onclick="window.selectCategory('Shooter')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">SHOOTER</button>
+                        <button onclick="window.selectCategory('Horror')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">HORROR</button>
+                        <button onclick="window.selectCategory('RPG')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">RPG</button>
+                        <button onclick="window.selectCategory('Puzzle')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">PUZZLE</button>
+                        <button onclick="window.selectCategory('Arcade')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">ARCADE</button>
+                        <button onclick="window.selectCategory('Adventure')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">ADVENTURE</button>
+                    </div>
                 </div>
 
-                <!-- Category Filters -->
-                <div id="category-filters" class="flex flex-wrap gap-2 w-full md:w-auto justify-start md:justify-end">
-                    <button onclick="window.selectCategory('All')" class="category-pill active bg-[#00ff00]/10 border border-[#00ff00]/30 text-[#00ff00] px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all">ALL</button>
-                    <button onclick="window.selectCategory('Visual Novel')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">VISUAL NOVEL</button>
-                    <button onclick="window.selectCategory('Platformer')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">PLATFORMER</button>
-                    <button onclick="window.selectCategory('Shooter')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">SHOOTER</button>
-                    <button onclick="window.selectCategory('Horror')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">HORROR</button>
-                    <button onclick="window.selectCategory('RPG')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">RPG</button>
-                    <button onclick="window.selectCategory('Puzzle')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">PUZZLE</button>
-                    <button onclick="window.selectCategory('Arcade')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">ARCADE</button>
-                    <button onclick="window.selectCategory('Adventure')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">ADVENTURE</button>
+                <!-- Games Grid -->
+                <div id="games-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    <!-- Populated dynamically via app.js -->
+                </div>
+
+                <!-- Pagination Control Bar -->
+                <div id="pagination-controls" class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/[0.02] border border-white/5 rounded-2xl p-4 md:p-6 backdrop-blur-xl font-mono text-xs mt-2">
+                    <div class="text-gray-400">
+                        Showing <span id="pagination-start" class="text-white font-bold">0</span> to <span id="pagination-end" class="text-white font-bold">0</span> of <span id="pagination-total" class="text-white font-bold">0</span> titles
+                    </div>
+                    <div id="pagination-buttons" class="flex items-center gap-1.5 flex-wrap">
+                        <!-- Populated dynamically -->
+                    </div>
                 </div>
             </div>
 
-            <!-- Games Grid -->
-            <div id="games-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                <!-- Populated dynamically via app.js -->
+            <!-- News Tab View -->
+            <div id="view-news" class="tab-view hidden flex flex-col gap-6">
+                <div class="bg-white/[0.02] border border-white/5 rounded-2xl p-6 backdrop-blur-xl">
+                    <h2 class="text-lg font-bold text-white uppercase font-mono tracking-wider mb-2 border-b border-white/5 pb-3">Latest Portal Updates</h2>
+                    
+                    <div class="flex flex-col gap-6 mt-4">
+                        <!-- News Item 1 -->
+                        <div class="news-card bg-[#0f0f15]/80 border border-white/5 rounded-xl p-5 hover:border-[#00ff00]/30 transition-all duration-300">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="bg-[#00ff00]/10 border border-[#00ff00]/20 text-[#00ff00] text-[10px] font-mono font-bold px-2.5 py-1 rounded-md uppercase">SYSTEM PATCH</span>
+                                <span class="text-[11px] text-gray-500 font-mono">July 11, 2026</span>
+                            </div>
+                            <h3 class="text-base font-bold text-white font-mono mb-2">v1.2.0: Emulator JS Upgrade & Ads Deflected</h3>
+                            <p class="text-xs text-gray-400 font-sans leading-relaxed">
+                                Underwent a complete overhaul of our external emulator engine. We have integrated the updated <b>EmulatorJS</b> rom loader directly into our portal proxy pipeline. In addition, we deployed a local sandboxed content filtering algorithm that strips out obtrusive advertisements, analytics trackers, and popups from third-party GN-Math games automatically, bringing you an uninterrupted high-performance gaming environment!
+                            </p>
+                        </div>
+
+                        <!-- News Item 2 -->
+                        <div class="news-card bg-[#0f0f15]/80 border border-white/5 rounded-xl p-5 hover:border-[#00ff00]/30 transition-all duration-300">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-mono font-bold px-2.5 py-1 rounded-md uppercase">NEW ARRIVALS</span>
+                                <span class="text-[11px] text-gray-500 font-mono">July 05, 2026</span>
+                            </div>
+                            <h3 class="text-base font-bold text-white font-mono mb-2">Massive Games Injection</h3>
+                            <p class="text-xs text-gray-400 font-sans leading-relaxed">
+                                Added multiple legendary unblocked titles, including <b>Bowmasters</b>, <b>OvO 2</b>, <b>Crazy Cattle 3D</b>, <b>Frickbears 3</b>, <b>Papers, Please</b>, and <b>Riddle School</b>. Our inventory is fully unblocked and works safely across standard academic network firewalls.
+                            </p>
+                        </div>
+
+                        <!-- News Item 3 -->
+                        <div class="news-card bg-[#0f0f15]/80 border border-white/5 rounded-xl p-5 hover:border-[#00ff00]/30 transition-all duration-300">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[10px] font-mono font-bold px-2.5 py-1 rounded-md uppercase">SERVER NOTES</span>
+                                <span class="text-[11px] text-gray-500 font-mono">June 20, 2026</span>
+                            </div>
+                            <h3 class="text-base font-bold text-white font-mono mb-2">Save Game State System</h3>
+                            <p class="text-xs text-gray-400 font-sans leading-relaxed">
+                                All flash and emulator saves are stored strictly within your browser sandbox localStorage. This keeps your game progress offline and safe from server database resets or wipes.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab View -->
+            <div id="view-settings" class="tab-view hidden flex flex-col gap-6">
+                <div class="bg-white/[0.02] border border-white/5 rounded-2xl p-6 backdrop-blur-xl">
+                    <h2 class="text-lg font-bold text-white uppercase font-mono tracking-wider mb-2 border-b border-white/5 pb-3">Portal Settings & Customization</h2>
+                    
+                    <div class="flex flex-col gap-6 mt-4">
+                        <!-- Theme Toggle Setting Card -->
+                        <div class="settings-card bg-[#0f0f15]/80 border border-white/5 rounded-xl p-6">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div>
+                                    <h3 class="text-base font-bold text-white font-mono flex items-center gap-2">
+                                        🎨 Theme Selector
+                                    </h3>
+                                    <p class="text-xs text-gray-400 font-sans mt-1">
+                                        Toggle between light mode and dark mode for comfortable navigation.
+                                    </p>
+                                </div>
+                                <div class="flex items-center bg-black/40 border border-white/10 rounded-xl p-1 gap-1 w-fit self-start sm:self-center">
+                                    <button onclick="window.setTheme('dark')" id="theme-btn-dark" class="px-4 py-2 rounded-lg font-mono text-xs font-bold transition-all text-[#00ff00] bg-white/10 cursor-pointer flex items-center gap-1.5">
+                                        🌙 DARK
+                                    </button>
+                                    <button onclick="window.setTheme('light')" id="theme-btn-light" class="px-4 py-2 rounded-lg font-mono text-xs font-bold transition-all text-gray-400 hover:text-white cursor-pointer flex items-center gap-1.5">
+                                        ☀️ LIGHT
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Wallpaper / Background Customizer Card -->
+                        <div class="settings-card bg-[#0f0f15]/80 border border-white/5 rounded-xl p-6">
+                            <h3 class="text-base font-bold text-white font-mono flex items-center gap-2 mb-2">
+                                🌌 Page Wallpaper Selector
+                            </h3>
+                            <p class="text-xs text-gray-400 font-sans mb-4">
+                                Personalize your gaming portal with premium preset backgrounds or import your own animated GIF / image.
+                            </p>
+                            
+                            <!-- Wallpaper Presets Grid -->
+                            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 mb-4">
+                                <button onclick="window.selectWallpaper('cosmic')" id="wp-btn-cosmic" class="px-3 py-2.5 rounded-lg border text-center transition-all font-mono text-xs font-bold cursor-pointer bg-black/40 border-white/10 text-gray-300 hover:text-[#00ff00] hover:border-[#00ff00]/30">
+                                    🌌 Cosmic Void
+                                </button>
+                                <button onclick="window.selectWallpaper('cybergrid')" id="wp-btn-cybergrid" class="px-3 py-2.5 rounded-lg border text-center transition-all font-mono text-xs font-bold cursor-pointer bg-black/40 border-white/10 text-gray-300 hover:text-[#00ff00] hover:border-[#00ff00]/30">
+                                    🌐 Cyber Grid
+                                </button>
+                                <button onclick="window.selectWallpaper('vaporwave')" id="wp-btn-vaporwave" class="px-3 py-2.5 rounded-lg border text-center transition-all font-mono text-xs font-bold cursor-pointer bg-black/40 border-white/10 text-gray-300 hover:text-[#00ff00] hover:border-[#00ff00]/30">
+                                    🌇 Synthwave
+                                </button>
+                                <button onclick="window.selectWallpaper('matrix')" id="wp-btn-matrix" class="px-3 py-2.5 rounded-lg border text-center transition-all font-mono text-xs font-bold cursor-pointer bg-black/40 border-white/10 text-gray-300 hover:text-[#00ff00] hover:border-[#00ff00]/30">
+                                    👾 Matrix Rain
+                                </button>
+                                <button onclick="window.selectWallpaper('custom')" id="wp-btn-custom" class="px-3 py-2.5 rounded-lg border text-center transition-all font-mono text-xs font-bold cursor-pointer bg-black/40 border-white/10 text-gray-300 hover:text-[#00ff00] hover:border-[#00ff00]/30">
+                                    ✨ Custom / Import
+                                </button>
+                            </div>
+
+                            <!-- Custom Wallpaper Inputs -->
+                            <div id="custom-wallpaper-container" class="hidden bg-black/30 border border-white/5 rounded-xl p-4 flex flex-col gap-4 animate-fadeIn">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <!-- Import Local Image File -->
+                                    <div>
+                                        <span class="text-[10px] font-mono text-gray-400 uppercase tracking-wider block mb-1.5">OPTION A: IMPORT OWN WALLPAPER FILE</span>
+                                        <div id="wallpaper-drag-zone" class="border border-dashed border-white/15 hover:border-[#00ff00]/40 rounded-lg p-3.5 text-center cursor-pointer transition-all bg-black/30 flex flex-col items-center justify-center gap-1 hover:bg-black/50" onclick="document.getElementById('wallpaper-file-input').click()">
+                                            <span class="text-xs text-gray-300" id="wp-drag-text">📁 Select Wallpaper Image</span>
+                                            <span class="text-[8px] text-gray-600 uppercase">PNG, JPG, GIF, WEBP</span>
+                                            <input id="wallpaper-file-input" type="file" accept="image/*" class="hidden" onchange="window.handleWallpaperFileSelect(event)">
+                                        </div>
+                                    </div>
+
+                                    <!-- Paste Wallpaper URL -->
+                                    <div class="flex flex-col gap-1.5 justify-center">
+                                        <span class="text-[10px] font-mono text-gray-400 uppercase tracking-wider block">OPTION B: PASTE BACKGROUND URL</span>
+                                        <input id="custom-wallpaper-input" type="url" placeholder="https://media.giphy.com/media/.../giphy.gif" class="bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff00]/30 font-mono w-full" oninput="window.applyCustomWallpaper(this.value)">
+                                        <p class="text-[8px] text-gray-600 leading-tight">
+                                            Supports any direct image/gif link from the web (.png, .jpg, .webp, or animated .gif).
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between border-t border-white/5 pt-2">
+                                    <span class="text-[9px] text-gray-500 font-mono">Imported wallpaper persists automatically in your browser state</span>
+                                    <button onclick="window.clearCustomWallpaper()" class="bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 text-red-400 px-3 py-1.5 rounded-lg font-mono text-[10px] font-bold cursor-pointer transition-all">
+                                        RESET WALLPAPER ✕
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Corner Companions / Retro GIFs Card -->
+                        <div class="settings-card bg-[#0f0f15]/80 border border-white/5 rounded-xl p-6">
+                            <h3 class="text-base font-bold text-white font-mono flex items-center gap-2 mb-2">
+                                👾 Corner Sprite Companions
+                            </h3>
+                            <p class="text-xs text-gray-400 font-sans mb-4">
+                                Place cool, animated retro gaming sprites or torches in the top-left and top-right corners of your viewport!
+                            </p>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Left Corner Sprite Select -->
+                                <div class="bg-black/25 p-4 rounded-xl border border-white/5">
+                                    <label class="block text-xs font-bold text-white font-mono mb-2 uppercase tracking-wide flex items-center justify-between">
+                                        <span>Left Corner Sprite</span>
+                                        <span id="left-sprite-preview-badge" class="text-[10px] text-[#00ff00]">Active</span>
+                                    </label>
+                                    <select id="left-sprite-select" onchange="window.changeLeftSprite(this.value)" class="w-full bg-black/60 border border-white/10 rounded-lg px-2.5 py-2 text-xs font-mono text-white focus:outline-none focus:border-[#00ff00]/30 cursor-pointer">
+                                        <option value="invader">👾 Space Invader (Default)</option>
+                                        <option value="coin">🪙 Spinning Coin</option>
+                                        <option value="fire_blue">🔥 Blue Torch</option>
+                                        <option value="fire_green">💚 Green Flame</option>
+                                        <option value="slime">🧪 Bouncing Slime</option>
+                                        <option value="bat">🦇 Flying Bat</option>
+                                        <option value="cube">📦 Companion Cube</option>
+                                        <option value="custom">✨ Custom GIF URL...</option>
+                                        <option value="none">❌ Hide Left Sprite</option>
+                                    </select>
+                                    
+                                    <!-- Custom Left Input -->
+                                    <div id="custom-left-sprite-container" class="hidden mt-3 flex gap-1.5 animate-fadeIn">
+                                        <input id="custom-left-sprite-input" type="url" placeholder="https://media.giphy.com/.../giphy.gif" class="bg-black/40 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff00]/20 font-mono w-full" oninput="window.applyCustomLeftSprite(this.value)">
+                                    </div>
+                                </div>
+
+                                <!-- Right Corner Sprite Select -->
+                                <div class="bg-black/25 p-4 rounded-xl border border-white/5">
+                                    <label class="block text-xs font-bold text-white font-mono mb-2 uppercase tracking-wide flex items-center justify-between">
+                                        <span>Right Corner Sprite</span>
+                                        <span id="right-sprite-preview-badge" class="text-[10px] text-[#00ff00]">Active</span>
+                                    </label>
+                                    <select id="right-sprite-select" onchange="window.changeRightSprite(this.value)" class="w-full bg-black/60 border border-white/10 rounded-lg px-2.5 py-2 text-xs font-mono text-white focus:outline-none focus:border-[#00ff00]/30 cursor-pointer">
+                                        <option value="invader">👾 Space Invader</option>
+                                        <option value="coin">🪙 Spinning Coin</option>
+                                        <option value="fire_blue">🔥 Blue Torch (Default)</option>
+                                        <option value="fire_green">💚 Green Flame</option>
+                                        <option value="slime">🧪 Bouncing Slime</option>
+                                        <option value="bat">🦇 Flying Bat</option>
+                                        <option value="cube">📦 Companion Cube</option>
+                                        <option value="custom">✨ Custom GIF URL...</option>
+                                        <option value="none">❌ Hide Right Sprite</option>
+                                    </select>
+
+                                    <!-- Custom Right Input -->
+                                    <div id="custom-right-sprite-container" class="hidden mt-3 flex gap-1.5 animate-fadeIn">
+                                        <input id="custom-right-sprite-input" type="url" placeholder="https://media.giphy.com/.../giphy.gif" class="bg-black/40 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff00]/20 font-mono w-full" oninput="window.applyCustomRightSprite(this.value)">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- GN-Math & Web Game Data Console -->
+                        <div class="settings-card bg-[#0f0f15]/80 border border-white/5 rounded-xl p-6">
+                            <h3 class="text-base font-bold text-white font-mono flex items-center gap-2 mb-2">
+                                📊 Game Catalog & Web Data
+                            </h3>
+                            <p class="text-xs text-gray-400 font-sans mb-4">
+                                Download active unblocked web game datasets or raw proxy lists directly to your device.
+                            </p>
+                            
+                            <div class="mb-6">
+                                <!-- Export Actions -->
+                                <div class="bg-black/35 p-4 rounded-xl border border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                    <div>
+                                        <h4 class="text-xs font-bold text-white font-mono uppercase tracking-wider mb-1">Download Active Data</h4>
+                                        <p class="text-[11px] text-gray-500">Save unblocked game sources and proxy configurations locally.</p>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                                        <button onclick="window.downloadWebDataJSON()" class="bg-[#00ff00]/10 border border-[#00ff00]/25 hover:bg-[#00ff00] hover:text-black text-[#00ff00] px-4 py-2.5 rounded-lg font-mono text-xs font-bold transition-all cursor-pointer flex-1 sm:flex-initial text-center">
+                                            📥 DOWNLOAD JSON
+                                        </button>
+                                        <button onclick="window.downloadProxyLinksTXT()" class="bg-white/5 border border-white/10 hover:bg-white/15 text-white px-4 py-2.5 rounded-lg font-mono text-xs font-bold transition-all cursor-pointer flex-1 sm:flex-initial text-center">
+                                            📄 EXPORT TXT LINKS
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Active Game Statistics -->
+                            <div class="bg-black/20 p-4 rounded-xl border border-white/5">
+                                <h4 class="text-xs font-bold text-white font-mono uppercase tracking-wider mb-2">Live Catalog Stats</h4>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+                                    <div class="p-2 bg-black/10 rounded border border-white/5">
+                                        <span class="text-[9px] text-gray-500 block uppercase font-mono">Total Roster</span>
+                                        <span id="stats-total-games" class="text-xs font-bold text-[#00ff00] font-mono">--</span>
+                                    </div>
+                                    <div class="p-2 bg-black/10 rounded border border-white/5">
+                                        <span class="text-[9px] text-gray-500 block uppercase font-mono">Total Categories</span>
+                                        <span id="stats-total-categories" class="text-xs font-bold text-purple-400 font-mono">--</span>
+                                    </div>
+                                    <div class="p-2 bg-black/10 rounded border border-white/5">
+                                        <span class="text-[9px] text-gray-500 block uppercase font-mono">Proxy Mode</span>
+                                        <span class="text-xs font-bold text-emerald-400 font-mono">UNBLOCKED</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System Information Card -->
+                        <div class="settings-card bg-[#0f0f15]/80 border border-white/5 rounded-xl p-6">
+                            <h3 class="text-sm font-bold text-white font-mono mb-2">🖥 System Diagnostic Information</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3 text-xs font-mono">
+                                <div class="bg-black/20 p-3 rounded-lg border border-white/5">
+                                    <span class="text-gray-500 block text-[10px]">LOCAL ENGINE STATE</span>
+                                    <span class="text-[#00ff00] font-bold">READY / OPTIMIZED</span>
+                                </div>
+                                <div class="bg-black/20 p-3 rounded-lg border border-white/5">
+                                    <span class="text-gray-500 block text-[10px]">SANDBOX BYPASS FILTER</span>
+                                    <span class="text-emerald-400 font-bold">ACTIVE (STRICT)</span>
+                                </div>
+                                <div class="bg-black/20 p-3 rounded-lg border border-white/5">
+                                    <span class="text-gray-500 block text-[10px]">CACHE LOAD TIME</span>
+                                    <span class="text-gray-300 font-bold" id="cache-latency">0.12ms</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reset Saves Storage -->
+                        <div class="settings-card bg-[#0f0f15]/80 border border-white/5 rounded-xl p-6">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div>
+                                    <h3 class="text-base font-bold text-white font-mono text-red-400">
+                                        ⚠️ Danger Zone
+                                    </h3>
+                                    <p class="text-xs text-gray-400 font-sans mt-1">
+                                        Clear all saved emulator states, local browser caches, and history.
+                                    </p>
+                                </div>
+                                <button onclick="window.clearAllPortalSaves()" class="bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white px-4 py-2.5 rounded-xl font-mono text-xs font-bold transition-all cursor-pointer">
+                                    CLEAR SAVED DATA
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chatroom Tab View -->
+            <div id="view-chat" class="tab-view hidden flex flex-col gap-6">
+                <div class="bg-white/[0.02] border border-white/5 rounded-2xl p-6 backdrop-blur-xl">
+                    <div class="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-white/5 pb-4 mb-6 gap-4">
+                        <div>
+                            <h2 class="text-lg font-bold text-white uppercase font-mono tracking-wider flex items-center gap-2">
+                                💬 QTX ANONYMOUS BOARD
+                            </h2>
+                            <p class="text-xs text-gray-400 font-sans mt-0.5">
+                                Real-time, server-synchronized anonymous message feed. Say anything, create private rooms, no login needed.
+                            </p>
+                        </div>
+                        
+                        <!-- Username Customizer & Room Code Share -->
+                        <div class="flex flex-wrap items-center gap-3 font-mono text-xs w-full md:w-auto">
+                            <div class="bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 flex items-center gap-2">
+                                <span class="text-gray-500 text-[10px]">ROOM:</span>
+                                <span id="chat-current-room" class="text-[#00ff00] font-bold">global</span>
+                            </div>
+                            <div class="bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 flex items-center gap-2">
+                                <span class="text-gray-500 text-[10px]">ACTIVE AS:</span>
+                                <span id="chat-header-avatar" class="text-sm">👾</span>
+                                <span id="chat-header-username" class="text-[#00ff00] font-bold">Anonymous</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                        <!-- Sidebar: Rooms & Board Directory -->
+                        <div class="lg:col-span-1 flex flex-col gap-4">
+                            <!-- Channel List -->
+                            <div class="bg-[#0f0f15]/80 border border-white/5 rounded-xl p-4 flex flex-col gap-3">
+                                <h3 class="text-xs font-bold font-mono text-gray-400 uppercase tracking-widest">Active Channels</h3>
+                                <div id="chat-rooms-list" class="flex flex-col gap-1.5 text-xs font-mono">
+                                    <!-- Dynamic rooms list -->
+                                    <button onclick="window.selectChatRoom('global')" id="btn-room-global" class="flex items-center justify-between w-full text-left px-3 py-2 rounded-lg bg-[#00ff00]/10 border border-[#00ff00]/20 text-[#00ff00] font-bold cursor-pointer transition-all">
+                                        <span>🌍 global</span>
+                                        <span class="text-[9px] bg-[#00ff00]/20 px-1.5 py-0.5 rounded text-white" id="count-room-global">0</span>
+                                    </button>
+                                </div>
+
+                                <div class="border-t border-white/5 pt-3 mt-1">
+                                    <h4 class="text-[10px] font-bold font-mono text-gray-500 uppercase mb-2">Create / Join Private Room</h4>
+                                    <div class="flex gap-2">
+                                        <input id="new-room-name" type="text" placeholder="room-name..." class="bg-black/60 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff00]/30 font-mono w-full">
+                                        <button onclick="window.createOrJoinRoom()" class="bg-[#00ff00]/10 hover:bg-[#00ff00]/20 border border-[#00ff00]/20 hover:border-[#00ff00]/40 text-[#00ff00] font-bold px-3 py-1.5 rounded-lg text-xs font-mono cursor-pointer transition-all">
+                                            JOIN
+                                        </button>
+                                    </div>
+                                    <p class="text-[9px] text-gray-500 mt-2 font-sans">
+                                        Share the room name with friends to connect instantly in absolute privacy.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Board Guidelines -->
+                            <div class="bg-[#0f0f15]/80 border border-white/5 rounded-xl p-4 text-[11px] font-mono leading-relaxed text-gray-400">
+                                <span class="text-[#00ff00] font-bold block mb-1">💡 Board Guidelines</span>
+                                <ul class="list-disc list-inside space-y-1 text-gray-500">
+                                    <li>Completely anonymous posting.</li>
+                                    <li>Add custom nicknames & avatars.</li>
+                                    <li>Upload files or paste image URLs.</li>
+                                    <li>Create private unlisted rooms.</li>
+                                </ul>
+                            </div>
+
+                            <!-- Discord-style User Footer Panel Card -->
+                            <div class="bg-[#090a0f] border border-[#00ff00]/20 rounded-xl p-3 flex items-center justify-between gap-2 shadow-lg mt-auto">
+                                <div class="flex items-center gap-2.5 min-w-0 cursor-pointer hover:bg-white/5 p-1 rounded-lg transition-all" onclick="window.openDiscordSettings()">
+                                    <!-- Avatar with online indicator -->
+                                    <div class="relative w-9 h-9 rounded-lg bg-black/60 border border-white/10 flex items-center justify-center text-xl overflow-visible shrink-0" id="discord-sidebar-avatar-container">
+                                        👾
+                                        <span class="absolute bottom-[-2px] right-[-2px] w-2.5 h-2.5 bg-emerald-400 border border-[#090a0f] rounded-full"></span>
+                                    </div>
+                                    <div class="flex flex-col min-w-0 font-mono">
+                                        <span id="discord-sidebar-display-name" class="text-xs text-white font-bold truncate max-w-[100px]">Anonymous</span>
+                                        <span id="discord-sidebar-username" class="text-[9px] text-gray-500 truncate max-w-[100px]">@anon</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center shrink-0">
+                                    <button type="button" onclick="window.openDiscordSettings()" class="text-gray-400 hover:text-[#00ff00] hover:bg-white/5 p-1.5 rounded-lg transition-all cursor-pointer flex items-center justify-center border-none" title="User Settings">
+                                        <!-- Gear Icon -->
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hover:rotate-45 transition-transform duration-300"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chat Feed & Send Message Box -->
+                        <div class="lg:col-span-3 flex flex-col gap-4">
+                            <!-- Dedicated Static Pinned Messages Header Block -->
+                            <div id="chat-pinned-messages-container" class="hidden bg-[#161623]/95 border border-yellow-500/20 rounded-xl p-4 flex flex-col gap-2.5 animate-fadeIn">
+                                <div class="flex items-center justify-between border-b border-yellow-500/10 pb-1.5 mb-1">
+                                    <span class="text-[10px] font-bold font-mono text-yellow-500 flex items-center gap-1.5">
+                                        📌 PINNED BOARD NOTICE
+                                    </span>
+                                    <span class="text-[9px] text-gray-400 font-mono" id="chat-pinned-count">0 messages pinned</span>
+                                </div>
+                                <div id="chat-pinned-list" class="flex flex-col gap-2 max-h-[140px] overflow-y-auto custom-scrollbar">
+                                    <!-- Dynamic Pinned messages -->
+                                </div>
+                            </div>
+
+                            <!-- Messages Window -->
+                            <div id="chat-messages-container" class="bg-black/40 border border-white/5 rounded-xl p-4 h-[380px] overflow-y-auto flex flex-col gap-3 custom-scrollbar">
+                                <div class="flex flex-col items-center justify-center h-full text-gray-500 font-mono text-xs">
+                                    <span class="animate-spin border-2 border-gray-500 border-t-transparent w-5 h-5 rounded-full mb-2"></span>
+                                    Loading message stream...
+                                </div>
+                            </div>
+
+                            <!-- Send Input Bar -->
+                            <form id="chat-send-form" onsubmit="window.handleChatSubmit(event)" class="bg-[#0f0f15]/80 border border-white/5 rounded-xl p-4 flex flex-col gap-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[10px] font-mono text-gray-500 uppercase flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                        SECURE ANONYMOUS CONNECTION
+                                    </span>
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" onclick="window.toggleImageInput()" id="btn-toggle-image-input" class="text-[10px] font-bold font-mono text-gray-400 hover:text-[#00ff00] flex items-center gap-1 bg-white/5 hover:bg-white/10 px-2 py-1 rounded transition-all cursor-pointer">
+                                            📎 ADD FILE/MEDIA
+                                        </button>
+                                        <div class="flex gap-1">
+                                            <button type="button" onclick="window.insertEmoji('🔥')" class="text-xs bg-white/5 hover:bg-white/10 px-2 py-1 rounded transition-all cursor-pointer">🔥</button>
+                                            <button type="button" onclick="window.insertEmoji('🎮')" class="text-xs bg-white/5 hover:bg-white/10 px-2 py-1 rounded transition-all cursor-pointer">🎮</button>
+                                            <button type="button" onclick="window.insertEmoji('💬')" class="text-xs bg-white/5 hover:bg-white/10 px-2 py-1 rounded transition-all cursor-pointer">💬</button>
+                                            <button type="button" onclick="window.insertEmoji('❤️')" class="text-xs bg-white/5 hover:bg-white/10 px-2 py-1 rounded transition-all cursor-pointer">❤️</button>
+                                            <button type="button" onclick="window.insertEmoji('⭐')" class="text-xs bg-white/5 hover:bg-white/10 px-2 py-1 rounded transition-all cursor-pointer">⭐</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Image/Video/File Attachment Tray -->
+                                <div id="chat-image-url-container" class="hidden bg-black/40 border border-white/5 rounded-xl p-3 flex flex-col gap-3 animate-fadeIn">
+                                    <div class="flex items-center justify-between border-b border-white/5 pb-1.5">
+                                        <span class="text-[9px] font-mono text-[#00ff00] font-bold flex items-center gap-1">📎 CHAT FILE & MEDIA ATTACHMENT</span>
+                                        <button type="button" onclick="window.clearChatImageAttachment()" class="text-[9px] text-red-400 hover:text-red-300 font-mono font-bold">CLEAR ✕</button>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <!-- Drag & Drop Zone -->
+                                        <div>
+                                            <div class="text-[8px] text-gray-500 font-mono mb-1">OPTION A: DRAG & DROP OR UPLOAD</div>
+                                            <div id="image-drag-zone" class="border border-dashed border-white/15 hover:border-[#00ff00]/40 rounded-lg p-3 text-center cursor-pointer transition-all bg-black/30 flex flex-col items-center justify-center gap-1 hover:bg-black/50" onclick="document.getElementById('chat-image-file-input').click()">
+                                                <span class="text-xs text-gray-300" id="drag-zone-text">📁 Select File or Media</span>
+                                                <span class="text-[8px] text-gray-600 uppercase">IMAGES, VIDEOS, ZIP, TXT, PDF, SAV...</span>
+                                                <input id="chat-image-file-input" type="file" class="hidden" onchange="window.handleChatFileSelect(event)">
+                                            </div>
+                                        </div>
+                                        <!-- URL Paste Zone -->
+                                        <div class="flex flex-col gap-1.5 justify-center">
+                                            <div class="text-[8px] text-gray-500 font-mono">OPTION B: PASTE DIRECT MEDIA URL</div>
+                                            <input id="chat-image-url-input" type="url" placeholder="https://example.com/video.mp4" class="bg-black/60 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff00]/30 font-mono w-full" oninput="window.previewChatImageFromUrl()">
+                                            <p class="text-[8px] text-gray-600 leading-tight">
+                                                Paste any direct image/video link from websites, discord, or imgur (.mp4, .webm, .png, etc).
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Selected media preview display -->
+                                    <div id="chat-image-preview-box" class="hidden mt-1 max-h-32 max-w-sm rounded-lg overflow-hidden border border-white/10 relative self-start bg-black/40">
+                                        <img id="chat-image-preview-img" src="" class="hidden object-contain max-h-32 w-auto" alt="Attachment preview">
+                                        <video id="chat-video-preview-vid" src="" class="hidden object-contain max-h-32 w-auto" controls muted autoplay loop></video>
+                                        <div id="chat-file-preview-generic" class="hidden p-3 flex items-center gap-2.5 text-xs font-mono text-[#00ff00]">
+                                            <span class="text-2xl">📄</span>
+                                            <div class="flex flex-col min-w-0">
+                                                <span id="chat-file-preview-name" class="truncate font-bold text-white max-w-[200px]">file.txt</span>
+                                                <span id="chat-file-preview-size" class="text-[10px] text-gray-400">12 KB</span>
+                                            </div>
+                                        </div>
+                                        <span class="absolute bottom-1 right-1 bg-black/80 px-2 py-0.5 rounded text-[8px] font-mono text-[#00ff00] font-bold">READY TO SEND</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex gap-2">
+                                    <input id="chat-message-input" type="text" placeholder="Type your message and hit enter..." class="bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff00]/50 font-mono flex-1">
+                                    <button type="submit" class="bg-[#00ff00]/10 border border-[#00ff00]/30 hover:border-[#00ff00]/60 text-[#00ff00] hover:bg-[#00ff00]/20 font-mono font-bold px-6 py-3 rounded-xl text-xs cursor-pointer transition-all flex items-center gap-2">
+                                        SUBMIT ➔
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
 
@@ -75,6 +568,8 @@
             <p class="mt-1">All game names, graphics, and trade marks are copyrights of their respective owners and builders. QTX is a self-contained web laboratory portal.</p>
         </footer>
     </div>
+
+
 
     <!-- Full-Screen Unblocked Web Game Player View -->
     <div id="game-player-container" hidden class="fixed inset-0 bg-black z-50 flex flex-col justify-between select-none">
@@ -110,6 +605,243 @@
 
         <!-- The actual game iframe element -->
         <iframe id="game-iframe" class="w-full flex-1 border-none bg-black" allow="autoplay; gamepad; fullscreen; keyboard" allowfullscreen></iframe>
+    </div>
+
+    <!-- Discord-Style Settings Modal -->
+    <div id="discord-settings-modal" class="hidden fixed inset-0 z-[120] bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="relative w-full max-w-3xl h-[600px] bg-[#07080c] border-2 border-solid border-[#00ff00]/30 rounded-2xl flex flex-col md:flex-row overflow-hidden shadow-2xl font-mono text-white" onclick="event.stopPropagation()">
+            
+            <!-- Left Sidebar Navigation -->
+            <div class="w-full md:w-[220px] bg-black/45 border-b md:border-b-0 md:border-r border-white/5 p-4 flex flex-col gap-1 shrink-0">
+                <div class="flex items-center gap-2 mb-4 border-b border-white/5 pb-2">
+                    <span class="text-[#00ff00] text-lg">⚙️</span>
+                    <span class="text-xs font-bold text-gray-300 uppercase tracking-wider font-mono">User Settings</span>
+                </div>
+                
+                <button onclick="window.switchSettingsTab('profile')" id="btn-set-tab-profile" class="w-full text-left px-3 py-2 rounded-lg bg-[#00ff00]/10 text-[#00ff00] font-bold text-xs transition-all cursor-pointer flex items-center gap-2 border border-[#00ff00]/15">
+                    👤 User Profile
+                </button>
+                <button onclick="window.switchSettingsTab('protection')" id="btn-set-tab-protection" class="w-full text-left px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-xs transition-all cursor-pointer flex items-center gap-2 border border-transparent">
+                    🔒 Name Protection
+                </button>
+                
+                <div class="mt-auto hidden md:flex flex-col gap-1 pt-4 border-t border-white/5 text-[9px] text-gray-500">
+                    <span>QTX SYSTEM v1.2</span>
+                    <span>SECURED LINK ACTIVE</span>
+                </div>
+            </div>
+
+            <!-- Right Content Panel -->
+            <div class="flex-1 p-6 overflow-y-auto flex flex-col gap-6 bg-[#0c0e14]/50 relative">
+                
+                <!-- Close Button (Top Right "ESC" badge) -->
+                <button onclick="window.closeDiscordSettings()" class="absolute top-4 right-4 text-gray-400 hover:text-red-400 flex items-center gap-1 bg-white/5 hover:bg-white/10 px-2.5 py-1 rounded-lg border border-white/10 transition-all cursor-pointer text-[10px] font-bold" title="Close Settings">
+                    ✕ CLOSE <span class="bg-black/60 px-1 py-0.5 rounded text-[8px] border border-white/10 ml-1">ESC</span>
+                </button>
+
+                <!-- Tab 1: Profile Settings -->
+                <div id="settings-pane-profile" class="flex flex-col gap-5">
+                    <div>
+                        <h2 class="text-sm font-bold text-[#00ff00] uppercase tracking-wider flex items-center gap-2 font-mono">
+                            👤 USER PROFILE CONFIGURATION
+                        </h2>
+                        <p class="text-[11px] text-gray-400 font-sans mt-1">
+                            Customize your unblocked retro arcade presence. Changes are applied immediately to your active profile.
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+                        <!-- Left column: inputs -->
+                        <div class="md:col-span-7 flex flex-col gap-4">
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Username (Unique handle)</label>
+                                <input id="profile-nick-input" type="text" placeholder="Anonymous" class="bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff00]/40 font-mono w-full font-bold" maxlength="20" oninput="window.changeChatNickname(this.value)">
+                            </div>
+
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Display Name (Visible nick)</label>
+                                <input id="profile-display-name-input" type="text" placeholder="e.g. Gamer Legend" class="bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff00]/40 font-mono w-full font-bold" maxlength="30" oninput="window.changeChatDisplayName(this.value)">
+                            </div>
+
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">About Me / Gamer Bio</label>
+                                <textarea id="profile-bio-input" placeholder="Tell other gamers about yourself... 🎮" class="bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff00]/40 font-mono w-full h-20 resize-none font-sans" maxlength="120" oninput="window.changeChatBio(this.value)"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Right column: Avatar & Visual Card preview -->
+                        <div class="md:col-span-5 flex flex-col gap-3">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Live Player Card Preview</span>
+                            
+                            <!-- Mini dynamic gamer card -->
+                            <div class="bg-[#090a0f] rounded-xl p-3 border border-solid border-[#00ff00]/30 shadow-lg relative overflow-hidden flex flex-col gap-2.5">
+                                <div id="preview-card-banner" class="h-8 bg-gradient-to-r from-[#00ff00]/20 to-purple-500/10 rounded border-b border-[#00ff00]/10 bg-cover bg-center"></div>
+                                
+                                <div class="flex items-center gap-3 mt-[-16px] px-1">
+                                    <div id="chat-profile-avatar-preview" class="w-12 h-12 rounded-lg bg-black border-2 border-solid border-[#00ff00]/50 flex items-center justify-center text-2xl overflow-hidden shrink-0 shadow-md">
+                                        👾
+                                    </div>
+                                    <div class="min-w-0 pt-3">
+                                        <div class="text-white text-xs font-bold truncate flex items-center gap-1" id="preview-card-display-name">
+                                            Anonymous
+                                        </div>
+                                        <div class="text-gray-500 text-[10px]" id="preview-card-username">@anon</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-black/40 border border-white/5 rounded p-2 text-[10px] leading-relaxed text-gray-300 font-sans break-words whitespace-pre-wrap min-h-12 max-h-16 overflow-y-auto" id="preview-card-bio">
+                                    Tell other gamers about yourself... 🎮
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Customizer: PFP Picker -->
+                    <div class="border-t border-white/5 pt-4 flex flex-col gap-3">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Choose Profile Avatar</span>
+                        
+                        <div class="flex flex-col md:flex-row gap-4 items-start">
+                            <!-- Emoji selector grid -->
+                            <div class="flex flex-col gap-1.5 w-full md:w-auto">
+                                <span class="text-[9px] text-gray-500 uppercase">A. Select Emoji Avatar:</span>
+                                <div class="grid grid-cols-5 gap-1.5">
+                                    <button onclick="window.selectPfpIcon('👾')" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-lg transition-all cursor-pointer">👾</button>
+                                    <button onclick="window.selectPfpIcon('🤖')" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-lg transition-all cursor-pointer">🤖</button>
+                                    <button onclick="window.selectPfpIcon('🦊')" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-lg transition-all cursor-pointer">🦊</button>
+                                    <button onclick="window.selectPfpIcon('🧙')" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-lg transition-all cursor-pointer">🧙</button>
+                                    <button onclick="window.selectPfpIcon('🚀')" class="border border-[#00ff00]/30 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-lg transition-all cursor-pointer">🚀</button>
+                                    
+                                    <button onclick="window.selectPfpIcon('🐱')" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-lg transition-all cursor-pointer">🐱</button>
+                                    <button onclick="window.selectPfpIcon('🐼')" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-lg transition-all cursor-pointer">🐼</button>
+                                    <button onclick="window.selectPfpIcon('🔥')" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-lg transition-all cursor-pointer">🔥</button>
+                                    <button onclick="window.selectPfpIcon('👑')" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-lg transition-all cursor-pointer">👑</button>
+                                    <button onclick="window.toggleCustomPfpInput()" id="btn-custom-pfp" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-[10px] text-[#00ff00] hover:text-white transition-all cursor-pointer font-bold">URL</button>
+                                </div>
+                            </div>
+
+                            <!-- Media file uploader -->
+                            <div class="flex-1 w-full flex flex-col gap-1.5">
+                                <span class="text-[9px] text-gray-500 uppercase">B. Or Upload Image File:</span>
+                                <button onclick="document.getElementById('profile-pfp-file-input').click()" class="w-full h-10 bg-white/5 hover:bg-[#00ff00]/10 border border-white/10 hover:border-[#00ff00]/40 rounded-lg text-xs font-bold text-gray-300 hover:text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                                    📁 UPLOAD CUSTOM FILE
+                                </button>
+                                <input id="profile-pfp-file-input" type="file" accept="image/*" class="hidden" onchange="window.handlePfpFileSelect(event)">
+                            </div>
+                        </div>
+
+                        <!-- Paste custom URL input -->
+                        <div id="custom-pfp-container" class="hidden flex flex-col gap-1.5 border-t border-white/5 pt-2 w-full animate-fadeIn">
+                            <span class="text-[9px] font-mono text-gray-400">PASTE AVATAR IMAGE DIRECT URL:</span>
+                            <div class="flex gap-2">
+                                <input id="custom-pfp-url-input" type="url" placeholder="https://example.com/avatar.png" class="bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff00]/30 font-mono w-full">
+                                <button onclick="window.applyCustomPfpUrl()" class="bg-[#00ff00]/10 hover:bg-[#00ff00]/20 border border-[#00ff00]/30 text-[#00ff00] text-xs px-4 rounded-lg font-bold cursor-pointer transition-all shrink-0">
+                                    APPLY URL
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Customizer: Banner Picker -->
+                    <div class="border-t border-white/5 pt-4 flex flex-col gap-3">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Choose Profile Banner (Supports GIFs!)</span>
+                        
+                        <div class="flex flex-col md:flex-row gap-4 items-start font-mono">
+                            <!-- GIF and static Presets selector -->
+                            <div class="flex flex-col gap-1.5 w-full md:w-auto">
+                                <span class="text-[9px] text-gray-500 uppercase">A. Select GIF or Static Banner Preset:</span>
+                                <div class="grid grid-cols-5 gap-1.5">
+                                    <button onclick="window.selectChatBanner('https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3ZpcjFpYmsxdXZwMDJhd3gybzQ4ejU4OGxsaTJrNG9yZWdnbXF0ayZlcD12MV9pbnRlcm5hbF9naWZfYnlfZ2lmeSZjdD1n/3X93tX39f0KEWZvXg1/giphy.gif')" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-lg transition-all cursor-pointer overflow-hidden" title="Synthwave Sunset">
+                                        <img src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3ZpcjFpYmsxdXZwMDJhd3gybzQ4ejU4OGxsaTJrNG9yZWdnbXF0ayZlcD12MV9pbnRlcm5hbF9naWZfYnlfZ2lmeSZjdD1n/3X93tX39f0KEWZvXg1/giphy.gif" class="w-full h-full object-cover">
+                                    </button>
+                                    <button onclick="window.selectChatBanner('https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExNmN2bHl6ZHExdGV4NGxtbXZhY3N4OXV4M2RldHlkOTR6Z3ZndmJrbyZlcD12MV9pbnRlcm5hbF9naWZfYnlfZ2lmeSZjdD1n/A06UFEx8jxEwU/giphy.gif')" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-lg transition-all cursor-pointer overflow-hidden" title="Cyber Matrix">
+                                        <img src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExNmN2bHl6ZHExdGV4NGxtbXZhY3N4OXV4M2RldHlkOTR6Z3ZndmJrbyZlcD12MV9pbnRlcm5hbF9naWZfYnlfZ2lmeSZjdD1n/A06UFEx8jxEwU/giphy.gif" class="w-full h-full object-cover">
+                                    </button>
+                                    <button onclick="window.selectChatBanner('https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExN3N3M2gyc3VtdTR6cnB2YmtxeG9pYWxudG54OXJrdDJtYXJ4MXg4byZlcD12MV9pbnRlcm5hbF9naWZfYnlfZ2lmeSZjdD1n/8gS6Y3X80m0W4/giphy.gif')" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-lg transition-all cursor-pointer overflow-hidden" title="Starry Pixel Sky">
+                                        <img src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExN3N3M2gyc3VtdTR6cnB2YmtxeG9pYWxudG54OXJrdDJtYXJ4MXg4byZlcD12MV9pbnRlcm5hbF9naWZfYnlfZ2lmeSZjdD1n/8gS6Y3X80m0W4/giphy.gif" class="w-full h-full object-cover">
+                                    </button>
+                                    <button onclick="window.selectChatBanner('https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDVqenpndzhsdjFldzhiaWV4eXo0NXpxd21wdXBxMTBrOXMxdmJhOSZlcD12MV9pbnRlcm5hbF9naWZfYnlfZ2lmeSZjdD1n/PbR9CrgB8SreM/giphy.gif')" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-lg transition-all cursor-pointer overflow-hidden" title="Lofi Window">
+                                        <img src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDVqenpndzhsdjFldzhiaWV4eXo0NXpxd21wdXBxMTBrOXMxdmJhOSZlcD12MV9pbnRlcm5hbF9naWZfYnlfZ2lmeSZjdD1n/PbR9CrgB8SreM/giphy.gif" class="w-full h-full object-cover">
+                                    </button>
+                                    <button onclick="window.selectChatBanner('')" class="border border-white/10 hover:border-red-500/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-[10px] text-red-500 hover:text-white transition-all cursor-pointer font-bold" title="Clear Banner">✕</button>
+                                </div>
+                            </div>
+
+                            <!-- Banner upload / paste URL -->
+                            <div class="flex-1 w-full flex flex-col gap-1.5">
+                                <span class="text-[9px] text-gray-500 uppercase">B. Or Upload Custom GIF/Image Banner:</span>
+                                <div class="flex gap-2">
+                                    <button onclick="document.getElementById('profile-banner-file-input').click()" class="flex-1 h-10 bg-white/5 hover:bg-[#00ff00]/10 border border-white/10 hover:border-[#00ff00]/40 rounded-lg text-xs font-bold text-gray-300 hover:text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                                        📁 UPLOAD GIF/IMAGE
+                                    </button>
+                                    <button onclick="window.toggleCustomBannerInput()" class="bg-black/40 hover:bg-[#00ff00]/10 border border-white/10 hover:border-[#00ff00]/40 rounded-lg px-3 text-xs text-[#00ff00] font-bold cursor-pointer transition-all">
+                                        LINK URL
+                                    </button>
+                                </div>
+                                <input id="profile-banner-file-input" type="file" accept="image/*" class="hidden" onchange="window.handleBannerFileSelect(event)">
+                            </div>
+                        </div>
+
+                        <!-- Custom Banner URL Input -->
+                        <div id="custom-banner-container" class="hidden flex flex-col gap-1.5 border-t border-white/5 pt-2 w-full animate-fadeIn font-mono">
+                            <span class="text-[9px] text-gray-400 font-bold">PASTE GIF / IMAGE DIRECT URL:</span>
+                            <div class="flex gap-2">
+                                <input id="custom-banner-url-input" type="url" placeholder="https://example.com/banner.gif" class="bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff00]/30 font-mono w-full">
+                                <button onclick="window.applyCustomBannerUrl()" class="bg-[#00ff00]/10 hover:bg-[#00ff00]/20 border border-[#00ff00]/30 text-[#00ff00] text-xs px-4 rounded-lg font-bold cursor-pointer transition-all shrink-0">
+                                    APPLY BANNER
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Done Settings footer -->
+                    <div class="mt-4 border-t border-white/5 pt-4 flex justify-end">
+                        <button onclick="window.closeDiscordSettings()" class="bg-[#00ff00]/10 hover:bg-[#00ff00]/20 border border-[#00ff00]/30 text-[#00ff00] text-xs font-bold px-6 py-2.5 rounded-xl cursor-pointer transition-all">
+                            DONE & CLOSE
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Name Protection -->
+                <div id="settings-pane-protection" class="hidden flex flex-col gap-5">
+                    <div>
+                        <h2 class="text-sm font-bold text-[#00ff00] uppercase tracking-wider flex items-center gap-2 font-mono">
+                            🔒 CRYPTO NAME PROTECTION
+                        </h2>
+                        <p class="text-[11px] text-gray-400 font-sans mt-1">
+                            Secure your username with an access key PIN. This prevents anyone else from stealing or claiming your handle in the lobby.
+                        </p>
+                    </div>
+
+                    <div class="bg-black/40 border border-white/5 rounded-xl p-4 flex flex-col gap-3">
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Enter Secure PIN / Password</label>
+                            <input id="profile-pin-input" type="password" placeholder="Enter password/PIN key..." class="bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff00]/30 font-mono w-full" oninput="window.updateLocalPin(this.value)">
+                        </div>
+
+                        <button onclick="window.claimUsername()" class="w-full bg-[#00ff00]/10 hover:bg-[#00ff00]/20 border border-[#00ff00]/30 text-[#00ff00] font-bold py-2.5 rounded-xl text-xs font-mono cursor-pointer transition-all flex items-center justify-center gap-1.5 mt-2">
+                            🔒 CLAIM & PROTECT MY NICKNAME
+                        </button>
+                    </div>
+
+                    <div class="text-[11px] font-mono leading-relaxed text-gray-500 bg-[#0c0e14]/40 p-4 rounded-xl border border-white/5">
+                        <span class="text-amber-500 font-bold block mb-1 font-mono">⚠️ How Name Claims Work</span>
+                        <ul class="list-decimal list-inside space-y-1.5 font-sans text-[10px]">
+                            <li>Each room maintains anonymous name records securely.</li>
+                            <li>By protecting your name, only your IP/device matching this PIN can send messages with this name.</li>
+                            <li>If you log in from another device, simply enter the same PIN in Settings to verify ownership.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Done Settings footer -->
+                    <div class="mt-auto border-t border-white/5 pt-4 flex justify-end">
+                        <button onclick="window.closeDiscordSettings()" class="bg-[#00ff00]/10 hover:bg-[#00ff00]/20 border border-[#00ff00]/30 text-[#00ff00] text-xs font-bold px-6 py-2.5 rounded-xl cursor-pointer transition-all">
+                            DONE & CLOSE
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
     </div>
 
     <!-- Active Notification System Layer -->
