@@ -105,7 +105,7 @@ async function loadGamesPortal() {
     `;
 
     try {
-        const response = await fetch('/src/games.json');
+        const response = await fetch('./src/games.json');
         if (!response.ok) throw new Error("HTTP Status " + response.status);
         const data = await response.json();
         
