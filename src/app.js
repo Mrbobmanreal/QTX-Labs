@@ -541,22 +541,32 @@ window.playWebGame = function (iframeUrl, title) {
         }
     }
 
-    // Check if URL is a CDN raw HTML file (like GN-Math games from JSDelivr)
-    const isCdnHtml = (iframeUrl.startsWith('http://') || iframeUrl.startsWith('https://')) && 
-                      (iframeUrl.includes('jsdelivr.net') || 
-                       iframeUrl.includes('raw.githubusercontent.com') || 
-                       iframeUrl.includes('rawcdn.githack.com')) &&
-                      (iframeUrl.includes('.html') || iframeUrl.includes('.htm'));
+    // Normalize GitHub repository/blob URLs if needed
+    let targetIframeUrl = iframeUrl;
+    if (targetIframeUrl && targetIframeUrl.includes('github.com/') && targetIframeUrl.includes('/blob/')) {
+        targetIframeUrl = targetIframeUrl
+            .replace('github.com/', 'raw.githubusercontent.com/')
+            .replace('/blob/', '/');
+    }
+
+    // Check if URL is a CDN raw HTML or GitHub file
+    const isCdnHtml = (targetIframeUrl.startsWith('http://') || targetIframeUrl.startsWith('https://')) && 
+                      (targetIframeUrl.includes('jsdelivr.net') || 
+                       targetIframeUrl.includes('githubusercontent.com') || 
+                       targetIframeUrl.includes('github.io') ||
+                       targetIframeUrl.includes('github.com') ||
+                       targetIframeUrl.includes('rawcdn.githack.com')) &&
+                      (targetIframeUrl.includes('.html') || targetIframeUrl.includes('.htm') || targetIframeUrl.endsWith('/') || !targetIframeUrl.split('?')[0].includes('.'));
 
     if (isCdnHtml) {
-        iframe._lastFetchedUrl = iframeUrl;
-        iframe.src = `/api/raw-proxy?url=${encodeURIComponent(iframeUrl)}`;
+        iframe._lastFetchedUrl = targetIframeUrl;
+        iframe.src = `/api/raw-proxy?url=${encodeURIComponent(targetIframeUrl)}`;
         iframe.onload = function() {
             if (loader) loader.style.display = 'none';
         };
     } else {
         iframe._lastFetchedUrl = null;
-        iframe.src = iframeUrl;
+        iframe.src = targetIframeUrl;
         iframe.onload = function() {
             if (loader) loader.style.display = 'none';
         };
@@ -747,13 +757,13 @@ const PRESET_WALLPAPERS = {
 };
 
 const SPRITE_PRESETS = {
-    invader: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExeWZ2YTZwMXp4eWhtdjF6dHZzYmsxeHZoc2p4ajJrdmtncnk2ejZpeCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/tIsmUIhS9S0tq/giphy.gif',
-    coin: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHIyb2ZtY2U4dmVqZnRtbDcyNWsyODN4OGxidW5jMWtqbzRndDk3ZiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/S60bL6m76B9P2S1Oym/giphy.gif',
-    fire_blue: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3g0YnRjZXptZXg5bms3cTNpODFkaTZ5N2o0eDZpM2szN2VrbnU2NiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/Xg0t8g0b27XgQx2p1D/giphy.gif',
-    fire_green: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYzgxaDkxMWp3ZncyMWR1ZWtpd3R0Ynk3YTAweTNxNHBtbTJnYTRjNSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/mYpS8VfPHgSgU/giphy.gif',
-    slime: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExc29lOG50ZzdscXFidmZydnFqczNidHBpMWo1NW1kMHdtNjJxdTVreCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/gS7W67O2zRSuXjOas6/giphy.gif',
-    bat: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWttcnEycXZmYno1bWp0NTRuNHB5cG5nbjNxMmdndzR2Z3J1MnloMCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/3oriffXF7e7uM2bVf2/giphy.gif',
-    cube: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExN3QwdjQyZHRyODNocjI0OTNxNHpwNmswYTdmaDJld20yc25rdnpsNiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/iY8ZreRzEdfkk/giphy.gif',
+    invader: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="%2300ff00"><path d="M6 2h12v2H6zm-2 2h16v2H4zm-2 2h20v2H2zm0 2h6v2H2zm14 0h6v2h-6zm-14 2h20v2H2zm4 2h12v2H6zm-2 2h4v2H4zm12 0h4v2h-4z"/></svg>',
+    coin: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="%23ffd700"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 9h6" stroke="%23b8860b" stroke-width="2"/></svg>',
+    fire_blue: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="%2300bfff"><path d="M12 2c0 0-6 4-6 10a6 6 0 0012 0c0-6-6-10-6-10z"/></svg>',
+    fire_green: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="%2300ff00"><path d="M12 2c0 0-6 4-6 10a6 6 0 0012 0c0-6-6-10-6-10z"/></svg>',
+    slime: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="%2332cd32"><path d="M12 4c-5 0-9 4-9 9 0 3 2 5 5 5h8c3 0 5-2 5-5 0-5-4-9-9-9z"/></svg>',
+    bat: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="%23a855f7"><path d="M12 6l3 4h4l-3 4 1 5-5-3-5 3 1-5-3-4h4z"/></svg>',
+    cube: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="%2300ffff"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>',
     none: ''
 };
 

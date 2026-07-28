@@ -7,17 +7,16 @@
 <script>
   launch()
   function launch() {
-    fetch('https://rawcdn.githack.com/genizy/web-port/1102f068fff0083d2a5ed979ebac6425540d78a5/deltarune/index.html?t=' + Date.now())
+    fetch('/api/raw-proxy?url=' + encodeURIComponent('https://rawcdn.githack.com/genizy/web-port/1102f068fff0083d2a5ed979ebac6425540d78a5/deltarune/index.html'))
       .then(r => r.text())
       .then(html => {
-        document.documentElement.innerHTML = html
-        document.documentElement.querySelectorAll('script').forEach(oldScript => {
-          const newScript = document.createElement('script')
-          if (oldScript.src) newScript.src = oldScript.src
-          else newScript.textContent = oldScript.textContent
-          document.body.appendChild(newScript)
-        })
+        document.open();
+        document.write(html);
+        document.close();
       })
+      .catch(err => {
+        console.error('Failed to load Deltarune:', err);
+      });
   }
 </script>
 </body>

@@ -62,6 +62,12 @@ async function startServer() {
     }
   };
 
+  // Favicon handler
+  app.get("/favicon.ico", (req, res) => {
+    res.setHeader("Content-Type", "image/svg+xml");
+    res.send(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🎮</text></svg>`);
+  });
+
   // Specific DS player file routes
   app.get("/localforage.js", (req, res) => proxyDSFile("localforage.js", res));
   app.get("/pako.min.js", (req, res) => proxyDSFile("pako.min.js", res));
@@ -152,7 +158,12 @@ async function startServer() {
     console.log(`[PROXY] gameId=${gameId}, relativePath=${relativePath} -> ${targetUrl}`);
 
     try {
-      const response = await fetch(targetUrl);
+      const response = await fetch(targetUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': '*/*'
+        }
+      });
       if (!response.ok) {
         console.warn(`[PROXY] Fetch failed for ${targetUrl} with status: ${response.status}`);
         return res.status(response.status).send(`Failed to fetch: ${response.statusText}`);
@@ -280,20 +291,32 @@ async function startServer() {
 
   // Generic secure proxy for JSDelivr and raw CDN HTML files
   app.get("/api/raw-proxy", async (req, res) => {
-    const targetUrl = req.query.url as string;
+    let targetUrl = req.query.url as string;
     if (!targetUrl) {
       return res.status(400).send("url query parameter is required");
     }
 
+    // Convert github.com/.../blob/... to raw.githubusercontent.com/.../...
+    if (targetUrl.includes("github.com/") && targetUrl.includes("/blob/")) {
+      targetUrl = targetUrl
+        .replace("github.com/", "raw.githubusercontent.com/")
+        .replace("/blob/", "/");
+    }
+
     // Security check: Only allow safe domains
-    const allowedDomains = ["jsdelivr.net", "githubusercontent.com", "githack.com"];
+    const allowedDomains = ["jsdelivr.net", "githubusercontent.com", "githack.com", "github.io", "github.com"];
     const isAllowed = allowedDomains.some(domain => targetUrl.includes(domain));
     if (!isAllowed) {
       return res.status(403).send("Forbidden proxy target");
     }
 
     try {
-      const response = await fetch(targetUrl);
+      const response = await fetch(targetUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': '*/*'
+        }
+      });
       if (!response.ok) {
         return res.status(response.status).send(`Failed to fetch upstream: ${response.statusText}`);
       }
