@@ -11,10 +11,6 @@
 </head>
 
 <body class="bg-[#050508] text-gray-100 font-sans min-h-full overflow-y-auto no-scrollbar">
-    <!-- Retro Corner Companions (Decorative GIF/Animations) -->
-    <div id="corner-companion-left" class="fixed top-2 left-2 z-[90] pointer-events-none transition-all duration-300 w-12 h-12 md:w-16 md:h-16 flex items-center justify-center filter drop-shadow-[0_0_8px_rgba(0,255,0,0.2)]"></div>
-    <div id="corner-companion-right" class="fixed top-2 right-2 z-[90] pointer-events-none transition-all duration-300 w-12 h-12 md:w-16 md:h-16 flex items-center justify-center filter drop-shadow-[0_0_8px_rgba(0,255,0,0.2)]"></div>
-
     <!-- Main Games Portal Container -->
     <div id="welcome" class="min-h-screen flex flex-col p-4 md:p-8">
         
@@ -36,7 +32,7 @@
                     <button onclick="window.switchTab('games')" id="tab-games" class="tab-btn active px-4 py-2 rounded-lg font-bold transition-all text-[#00ff00] bg-white/10 cursor-pointer">GAMES</button>
                     <button onclick="window.switchTab('news')" id="tab-news" class="tab-btn px-4 py-2 rounded-lg font-bold transition-all text-gray-400 hover:text-white cursor-pointer">NEWS</button>
                     <button onclick="window.switchTab('settings')" id="tab-settings" class="tab-btn px-4 py-2 rounded-lg font-bold transition-all text-gray-400 hover:text-white cursor-pointer">SETTINGS</button>
-                    <button onclick="window.switchTab('chat')" id="tab-chat" class="tab-btn px-4 py-2 rounded-lg font-bold transition-all text-gray-400 hover:text-white cursor-pointer relative">CHATROOM <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[7px] px-1 rounded-full uppercase scale-90 font-mono tracking-widest animate-pulse font-bold">LIVE</span></button>
+                    <button onclick="window.switchTab('chat')" id="tab-chat" class="tab-btn px-4 py-2 rounded-lg font-bold transition-all text-gray-400 hover:text-white cursor-pointer relative flex items-center gap-1.5">CHATROOM <span class="bg-amber-500/20 border border-amber-500/40 text-amber-400 text-[8px] px-1.5 py-0.5 rounded font-mono font-bold uppercase tracking-wider">BETA</span></button>
                 </nav>
             </div>
 
@@ -77,6 +73,22 @@
                         <button onclick="window.selectCategory('Puzzle')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">PUZZLE</button>
                         <button onclick="window.selectCategory('Arcade')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">ARCADE</button>
                         <button onclick="window.selectCategory('Adventure')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">ADVENTURE</button>
+                    </div>
+                </div>
+
+                <!-- Recently Played Games Section -->
+                <div id="recently-played-section" class="hidden flex-col gap-4 bg-white/[0.02] border border-white/5 rounded-2xl p-5 md:p-6 backdrop-blur-xl">
+                    <div class="flex items-center justify-between border-b border-white/5 pb-3">
+                        <h2 class="text-xs font-bold text-white font-mono uppercase tracking-wider flex items-center gap-2">
+                            <span>🕒 RECENTLY PLAYED</span>
+                            <span class="bg-[#00ff00]/10 border border-[#00ff00]/20 text-[#00ff00] text-[9px] px-2 py-0.5 rounded font-mono font-bold">LAST 4 PLAYED</span>
+                        </h2>
+                        <button onclick="window.clearRecentlyPlayed()" class="text-[10px] text-gray-500 hover:text-red-400 font-mono transition-colors cursor-pointer uppercase font-bold">
+                            Clear History
+                        </button>
+                    </div>
+                    <div id="recently-played-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- Populated dynamically via app.js -->
                     </div>
                 </div>
 
@@ -229,66 +241,6 @@
                             </div>
                         </div>
 
-                        <!-- Corner Companions / Retro GIFs Card -->
-                        <div class="settings-card bg-[#0f0f15]/80 border border-white/5 rounded-xl p-6">
-                            <h3 class="text-base font-bold text-white font-mono flex items-center gap-2 mb-2">
-                                👾 Corner Sprite Companions
-                            </h3>
-                            <p class="text-xs text-gray-400 font-sans mb-4">
-                                Place cool, animated retro gaming sprites or torches in the top-left and top-right corners of your viewport!
-                            </p>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <!-- Left Corner Sprite Select -->
-                                <div class="bg-black/25 p-4 rounded-xl border border-white/5">
-                                    <label class="block text-xs font-bold text-white font-mono mb-2 uppercase tracking-wide flex items-center justify-between">
-                                        <span>Left Corner Sprite</span>
-                                        <span id="left-sprite-preview-badge" class="text-[10px] text-[#00ff00]">Active</span>
-                                    </label>
-                                    <select id="left-sprite-select" onchange="window.changeLeftSprite(this.value)" class="w-full bg-black/60 border border-white/10 rounded-lg px-2.5 py-2 text-xs font-mono text-white focus:outline-none focus:border-[#00ff00]/30 cursor-pointer">
-                                        <option value="invader">👾 Space Invader (Default)</option>
-                                        <option value="coin">🪙 Spinning Coin</option>
-                                        <option value="fire_blue">🔥 Blue Torch</option>
-                                        <option value="fire_green">💚 Green Flame</option>
-                                        <option value="slime">🧪 Bouncing Slime</option>
-                                        <option value="bat">🦇 Flying Bat</option>
-                                        <option value="cube">📦 Companion Cube</option>
-                                        <option value="custom">✨ Custom GIF URL...</option>
-                                        <option value="none">❌ Hide Left Sprite</option>
-                                    </select>
-                                    
-                                    <!-- Custom Left Input -->
-                                    <div id="custom-left-sprite-container" class="hidden mt-3 flex gap-1.5 animate-fadeIn">
-                                        <input id="custom-left-sprite-input" type="url" placeholder="https://media.giphy.com/.../giphy.gif" class="bg-black/40 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff00]/20 font-mono w-full" oninput="window.applyCustomLeftSprite(this.value)">
-                                    </div>
-                                </div>
-
-                                <!-- Right Corner Sprite Select -->
-                                <div class="bg-black/25 p-4 rounded-xl border border-white/5">
-                                    <label class="block text-xs font-bold text-white font-mono mb-2 uppercase tracking-wide flex items-center justify-between">
-                                        <span>Right Corner Sprite</span>
-                                        <span id="right-sprite-preview-badge" class="text-[10px] text-[#00ff00]">Active</span>
-                                    </label>
-                                    <select id="right-sprite-select" onchange="window.changeRightSprite(this.value)" class="w-full bg-black/60 border border-white/10 rounded-lg px-2.5 py-2 text-xs font-mono text-white focus:outline-none focus:border-[#00ff00]/30 cursor-pointer">
-                                        <option value="invader">👾 Space Invader</option>
-                                        <option value="coin">🪙 Spinning Coin</option>
-                                        <option value="fire_blue">🔥 Blue Torch (Default)</option>
-                                        <option value="fire_green">💚 Green Flame</option>
-                                        <option value="slime">🧪 Bouncing Slime</option>
-                                        <option value="bat">🦇 Flying Bat</option>
-                                        <option value="cube">📦 Companion Cube</option>
-                                        <option value="custom">✨ Custom GIF URL...</option>
-                                        <option value="none">❌ Hide Right Sprite</option>
-                                    </select>
-
-                                    <!-- Custom Right Input -->
-                                    <div id="custom-right-sprite-container" class="hidden mt-3 flex gap-1.5 animate-fadeIn">
-                                        <input id="custom-right-sprite-input" type="url" placeholder="https://media.giphy.com/.../giphy.gif" class="bg-black/40 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff00]/20 font-mono w-full" oninput="window.applyCustomRightSprite(this.value)">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                         <!-- GN-Math & Web Game Data Console -->
                         <div class="settings-card bg-[#0f0f15]/80 border border-white/5 rounded-xl p-6">
                             <h3 class="text-base font-bold text-white font-mono flex items-center gap-2 mb-2">
@@ -381,7 +333,7 @@
                     <div class="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-white/5 pb-4 mb-6 gap-4">
                         <div>
                             <h2 class="text-lg font-bold text-white uppercase font-mono tracking-wider flex items-center gap-2">
-                                💬 QTX ANONYMOUS BOARD
+                                💬 QTX ANONYMOUS BOARD <span class="bg-amber-500/20 border border-amber-500/40 text-amber-400 text-[10px] px-2 py-0.5 rounded-md font-mono font-bold tracking-widest">BETA</span>
                             </h2>
                             <p class="text-xs text-gray-400 font-sans mt-0.5">
                                 Real-time, server-synchronized anonymous message feed. Say anything, create private rooms, no login needed.
@@ -396,7 +348,7 @@
                             </div>
                             <div class="bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 flex items-center gap-2">
                                 <span class="text-gray-500 text-[10px]">ACTIVE AS:</span>
-                                <span id="chat-header-avatar" class="text-sm">👾</span>
+                                <span id="chat-header-avatar" class="w-5 h-5 flex items-center justify-center"></span>
                                 <span id="chat-header-username" class="text-[#00ff00] font-bold">Anonymous</span>
                             </div>
                         </div>
@@ -445,9 +397,8 @@
                             <div class="bg-[#090a0f] border border-[#00ff00]/20 rounded-xl p-3 flex items-center justify-between gap-2 shadow-lg mt-auto">
                                 <div class="flex items-center gap-2.5 min-w-0 cursor-pointer hover:bg-white/5 p-1 rounded-lg transition-all" onclick="window.openDiscordSettings()">
                                     <!-- Avatar with online indicator -->
-                                    <div class="relative w-9 h-9 rounded-lg bg-black/60 border border-white/10 flex items-center justify-center text-xl overflow-visible shrink-0" id="discord-sidebar-avatar-container">
-                                        👾
-                                        <span class="absolute bottom-[-2px] right-[-2px] w-2.5 h-2.5 bg-emerald-400 border border-[#090a0f] rounded-full"></span>
+                                    <div class="relative w-9 h-9 rounded-lg bg-black/60 border border-white/10 flex items-center justify-center overflow-hidden shrink-0" id="discord-sidebar-avatar-container">
+                                        <span class="absolute bottom-[-2px] right-[-2px] w-2.5 h-2.5 bg-emerald-400 border border-[#090a0f] rounded-full z-10"></span>
                                     </div>
                                     <div class="flex flex-col min-w-0 font-mono">
                                         <span id="discord-sidebar-display-name" class="text-xs text-white font-bold truncate max-w-[100px]">Anonymous</span>
@@ -476,6 +427,15 @@
                                 <div id="chat-pinned-list" class="flex flex-col gap-2 max-h-[140px] overflow-y-auto custom-scrollbar">
                                     <!-- Dynamic Pinned messages -->
                                 </div>
+                            </div>
+
+                            <!-- Chat Search & Filter Bar -->
+                            <div class="bg-black/30 border border-white/5 rounded-xl px-3 py-2 flex items-center gap-2">
+                                <span class="text-gray-500 text-xs shrink-0">🔍</span>
+                                <input id="chat-search-input" type="text" oninput="window.filterChatMessages()" placeholder="Search messages by keyword or user..." class="bg-transparent text-xs text-white placeholder-gray-500 focus:outline-none font-mono w-full">
+                                <button id="chat-search-clear" type="button" onclick="window.clearChatSearch()" class="hidden text-gray-500 hover:text-white text-xs font-mono font-bold px-1.5 py-0.5 rounded cursor-pointer">
+                                    ✕
+                                </button>
                             </div>
 
                             <!-- Messages Window -->
@@ -678,8 +638,7 @@
                                 <div id="preview-card-banner" class="h-8 bg-gradient-to-r from-[#00ff00]/20 to-purple-500/10 rounded border-b border-[#00ff00]/10 bg-cover bg-center"></div>
                                 
                                 <div class="flex items-center gap-3 mt-[-16px] px-1">
-                                    <div id="chat-profile-avatar-preview" class="w-12 h-12 rounded-lg bg-black border-2 border-solid border-[#00ff00]/50 flex items-center justify-center text-2xl overflow-hidden shrink-0 shadow-md">
-                                        👾
+                                    <div id="chat-profile-avatar-preview" class="w-12 h-12 rounded-lg bg-black border-2 border-solid border-[#00ff00]/50 flex items-center justify-center overflow-hidden shrink-0 shadow-md">
                                     </div>
                                     <div class="min-w-0 pt-3">
                                         <div class="text-white text-xs font-bold truncate flex items-center gap-1" id="preview-card-display-name">
@@ -700,21 +659,23 @@
                     <div class="border-t border-white/5 pt-4 flex flex-col gap-3">
                         <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Choose Profile Avatar</span>
                         
-                        <div class="flex flex-col md:flex-row gap-4 items-start">
-                            <!-- Emoji selector grid -->
+                        <div class="flex flex-col md:flex-row gap-4 items-start font-mono">
+                            <!-- SVG Preset selector grid -->
                             <div class="flex flex-col gap-1.5 w-full md:w-auto">
-                                <span class="text-[9px] text-gray-500 uppercase">A. Select Emoji Avatar:</span>
+                                <span class="text-[9px] text-gray-500 uppercase">A. Select Preset Avatar Icon:</span>
                                 <div class="grid grid-cols-5 gap-1.5">
-                                    <button onclick="window.selectPfpIcon('👾')" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-lg transition-all cursor-pointer">👾</button>
-                                    <button onclick="window.selectPfpIcon('🤖')" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-lg transition-all cursor-pointer">🤖</button>
-                                    <button onclick="window.selectPfpIcon('🦊')" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-lg transition-all cursor-pointer">🦊</button>
-                                    <button onclick="window.selectPfpIcon('🧙')" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-lg transition-all cursor-pointer">🧙</button>
-                                    <button onclick="window.selectPfpIcon('🚀')" class="border border-[#00ff00]/30 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-lg transition-all cursor-pointer">🚀</button>
-                                    
-                                    <button onclick="window.selectPfpIcon('🐱')" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-lg transition-all cursor-pointer">🐱</button>
-                                    <button onclick="window.selectPfpIcon('🐼')" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-lg transition-all cursor-pointer">🐼</button>
-                                    <button onclick="window.selectPfpIcon('🔥')" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-lg transition-all cursor-pointer">🔥</button>
-                                    <button onclick="window.selectPfpIcon('👑')" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-lg transition-all cursor-pointer">👑</button>
+                                    <button onclick="window.selectPfpPreset('default')" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-[#00ff00] transition-all cursor-pointer" title="Default User">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                    </button>
+                                    <button onclick="window.selectPfpPreset('cyber')" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-cyan-400 transition-all cursor-pointer" title="Cyber">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 10h.01M15 10h.01M9 15h6"/></svg>
+                                    </button>
+                                    <button onclick="window.selectPfpPreset('gamer')" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-purple-400 transition-all cursor-pointer" title="Gamer">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><circle cx="15" cy="13" r="1"/><circle cx="18" cy="11" r="1"/><rect width="20" height="12" x="2" y="6" rx="6"/></svg>
+                                    </button>
+                                    <button onclick="window.selectPfpPreset('shield')" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-amber-400 transition-all cursor-pointer" title="Shield">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+                                    </button>
                                     <button onclick="window.toggleCustomPfpInput()" id="btn-custom-pfp" class="border border-white/10 hover:border-[#00ff00]/50 rounded-lg bg-black/40 w-10 h-10 flex items-center justify-center text-[10px] text-[#00ff00] hover:text-white transition-all cursor-pointer font-bold">URL</button>
                                 </div>
                             </div>

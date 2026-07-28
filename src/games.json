@@ -5828,7 +5828,7 @@
     "title": "Tetris (GBA)",
     "iframeUrl": "./src/games/tetris.html",
     "category": "Puzzle",
-    "thumbnail": "/src/assets/images/tetris_thumbnail_1779393470358.png",
+    "thumbnail": "./src/assets/images/tetris_thumbnail_1779393470358.png",
     "description": "The classic puzzle experience reimagined for the advance generation."
   },
   {

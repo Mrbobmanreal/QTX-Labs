@@ -11,6 +11,169 @@ try {
     console.error("Failed to load favorites list:", e);
 }
 
+let recentlyPlayedList = [];
+try {
+    recentlyPlayedList = JSON.parse(localStorage.getItem('qtx-recent-games') || '[]');
+} catch (e) {
+    console.error("Failed to load recently played list:", e);
+}
+
+function isGameStorageSaved(game) {
+    if (!game) return false;
+    
+    // Check if browser supports localStorage
+    let lsSupported = false;
+    try {
+        const testKey = '__qtx_ls_test__';
+        localStorage.setItem(testKey, '1');
+        localStorage.removeItem(testKey);
+        lsSupported = true;
+    } catch (e) {
+        lsSupported = false;
+    }
+
+    if (!lsSupported) return false;
+
+    // Check game explicit save properties
+    if (game.hasSave === false || game.supportsSave === false || game.supportsLocalStorage === false) {
+        return false;
+    }
+
+    // Check URL patterns that explicitly indicate no persistence
+    if (game.iframeUrl) {
+        const url = String(game.iframeUrl).toLowerCase();
+        if (url.includes('no-save') || url.includes('nosave') || url.includes('temp-only')) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function recordRecentlyPlayed(iframeUrl, title) {
+    if (!iframeUrl) return;
+
+    // Search for matching game in gamesData
+    const matched = gamesData.find(g => g.iframeUrl === iframeUrl || (g.title && g.title === title));
+
+    let gameObj;
+    if (matched) {
+        gameObj = {
+            id: String(matched.id),
+            title: matched.title,
+            iframeUrl: matched.iframeUrl,
+            thumbnail: matched.thumbnail || "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=400&h=250",
+            category: matched.category || 'Arcade',
+            description: matched.description || '',
+            hasSave: matched.hasSave !== undefined ? matched.hasSave : (matched.supportsSave !== undefined ? matched.supportsSave : true)
+        };
+    } else {
+        gameObj = {
+            id: 'custom-' + encodeURIComponent(iframeUrl),
+            title: title || 'Unblocked Game',
+            iframeUrl: iframeUrl,
+            thumbnail: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=400&h=250",
+            category: 'Arcade',
+            description: 'Recently played game.',
+            hasSave: true
+        };
+    }
+
+    // Filter out existing duplicate
+    recentlyPlayedList = recentlyPlayedList.filter(g => 
+        String(g.id) !== String(gameObj.id) && 
+        g.iframeUrl !== gameObj.iframeUrl && 
+        g.title !== gameObj.title
+    );
+
+    // Unshift to front
+    recentlyPlayedList.unshift(gameObj);
+
+    // Keep top 10
+    recentlyPlayedList = recentlyPlayedList.slice(0, 10);
+
+    try {
+        localStorage.setItem('qtx-recent-games', JSON.stringify(recentlyPlayedList));
+    } catch (e) {
+        console.error("Failed to save recently played games:", e);
+    }
+
+    renderRecentlyPlayed();
+}
+
+function renderRecentlyPlayed() {
+    const section = $id('recently-played-section');
+    const grid = $id('recently-played-grid');
+    if (!section || !grid) return;
+
+    if (!recentlyPlayedList || recentlyPlayedList.length === 0) {
+        section.classList.add('hidden');
+        section.classList.remove('flex');
+        return;
+    }
+
+    section.classList.remove('hidden');
+    section.classList.add('flex');
+
+    const last4 = recentlyPlayedList.slice(0, 4);
+
+    let html = '';
+    last4.forEach(game => {
+        const thumbnail = game.thumbnail || "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=400&h=250";
+        const escapedTitle = (game.title || '').replace(/'/g, "\\'");
+        const escapedIframeUrl = (game.iframeUrl || '').replace(/'/g, "\\'");
+        const isSaved = isGameStorageSaved(game);
+
+        const saveBadgeHtml = isSaved
+            ? `<span class="inline-flex items-center gap-1 text-[8px] font-mono font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-1.5 py-0.5 rounded shrink-0 shadow-sm" title="Supports persistent storage in localStorage">
+                <svg class="w-2.5 h-2.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                Saved
+               </span>`
+            : `<span class="inline-flex items-center gap-1 text-[8px] font-mono font-bold text-amber-400/90 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded shrink-0 shadow-sm" title="Persistent storage in localStorage not supported">
+                <svg class="w-2.5 h-2.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                Unsaved
+               </span>`;
+
+        html += `
+            <div class="group relative overflow-hidden rounded-xl border border-white/10 bg-[#0f0f15]/90 p-3.5 flex flex-col justify-between hover:border-[#00ff00]/50 hover:bg-[#14141c] hover:shadow-[0_0_20px_rgba(0,255,0,0.08)] transition-all duration-300">
+                <div class="flex gap-3 items-center">
+                    <div class="w-16 h-12 rounded-lg bg-black overflow-hidden shrink-0 border border-white/10 relative">
+                        <img src="${thumbnail}" alt="${game.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" referrerPolicy="no-referrer">
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center justify-between gap-1 mb-0.5">
+                            <span class="text-[8px] font-mono font-bold text-[#00ff00] uppercase tracking-wider block truncate">
+                                ${game.category || 'Arcade'}
+                            </span>
+                            ${saveBadgeHtml}
+                        </div>
+                        <h4 class="text-xs font-bold text-white font-mono truncate group-hover:text-[#00ff00] transition-colors">
+                            ${game.title}
+                        </h4>
+                    </div>
+                </div>
+                <div class="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between gap-2">
+                    <span class="text-[9px] text-gray-500 font-mono flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#00ff00] animate-pulse"></span>
+                        Recent
+                    </span>
+                    <button onclick="window.launchGame('${escapedIframeUrl}', '${escapedTitle}')" class="bg-[#00ff00]/10 hover:bg-[#00ff00] text-[#00ff00] hover:text-black border border-[#00ff00]/30 hover:border-transparent text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1">
+                        ▶ PLAY AGAIN
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    grid.innerHTML = html;
+}
+
+window.clearRecentlyPlayed = function () {
+    recentlyPlayedList = [];
+    localStorage.removeItem('qtx-recent-games');
+    renderRecentlyPlayed();
+    window.showMsg("Recently played history cleared!");
+};
+
 function isFavorited(id) {
     return favoritesList.includes(String(id));
 }
@@ -135,6 +298,7 @@ async function loadGamesPortal() {
         
         renderCategories();
         renderGames();
+        renderRecentlyPlayed();
         updateRosterStats();
     } catch (err) {
         console.error("Failed to load games list:", err);
@@ -332,9 +496,23 @@ window.selectCategory = function (category) {
 window.filterGames = function () {
     currentPage = 1;
     renderGames();
+
+    const searchInput = $id('game-search');
+    if (searchInput && searchInput.value.trim().length > 0) {
+        const grid = $id('games-grid');
+        if (grid) {
+            const rect = grid.getBoundingClientRect();
+            // Scroll if top of games grid is below 70% of viewport or scrolled out above
+            if (rect.top > window.innerHeight * 0.7 || rect.top < 0) {
+                grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+    }
 };
 
 window.playWebGame = function (iframeUrl, title) {
+    recordRecentlyPlayed(iframeUrl, title);
+
     const container = $id('game-player-container');
     const iframe = $id('game-iframe');
     const titleEl = $id('game-player-title');
@@ -850,7 +1028,7 @@ function initPortalSystem() {
     initWallpaperDragAndDrop();
 
     // Restore Saved Left Sprite
-    const savedLeftSprite = localStorage.getItem('qtx-left-sprite') || 'invader';
+    const savedLeftSprite = localStorage.getItem('qtx-left-sprite') || 'none';
     const leftSelect = document.getElementById('left-sprite-select');
     if (leftSelect) {
         leftSelect.value = savedLeftSprite;
@@ -858,7 +1036,7 @@ function initPortalSystem() {
     window.changeLeftSprite(savedLeftSprite);
 
     // Restore Saved Right Sprite
-    const savedRightSprite = localStorage.getItem('qtx-right-sprite') || 'fire_blue';
+    const savedRightSprite = localStorage.getItem('qtx-right-sprite') || 'none';
     const rightSelect = document.getElementById('right-sprite-select');
     if (rightSelect) {
         rightSelect.value = savedRightSprite;
@@ -879,9 +1057,36 @@ function initPortalSystem() {
 }
 
 // --- REAL-TIME ANONYMOUS CHATROOM ---
+const AVATAR_PRESETS = {
+    'default': `<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full p-1.5 text-[#00ff00]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+    'cyber': `<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full p-1.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 10h.01M15 10h.01M9 15h6"/></svg>`,
+    'gamer': `<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full p-1.5 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><circle cx="15" cy="13" r="1"/><circle cx="18" cy="11" r="1"/><rect width="20" height="12" x="2" y="6" rx="6"/></svg>`,
+    'shield': `<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full p-1.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>`
+};
+
+function getAvatarHtml(avatar, sizeClass = 'w-6 h-6', extraClasses = '') {
+    if (!avatar || avatar === '👾' || (avatar.length <= 4 && !avatar.startsWith('http') && !avatar.startsWith('preset:'))) {
+        avatar = 'preset:default';
+    }
+    if (avatar.startsWith('preset:')) {
+        const key = avatar.replace('preset:', '');
+        const svg = AVATAR_PRESETS[key] || AVATAR_PRESETS['default'];
+        return `<div class="${sizeClass} ${extraClasses} flex items-center justify-center rounded-lg bg-black/60 border border-white/10 shrink-0 overflow-hidden">${svg}</div>`;
+    }
+    const isUrl = avatar.startsWith('http://') || avatar.startsWith('https://') || avatar.startsWith('data:image/');
+    if (isUrl) {
+        return `<img src="${avatar}" class="${sizeClass} ${extraClasses} rounded-lg object-cover border border-white/10 shrink-0" alt="avatar" onerror="this.outerHTML='<div class=\\'${sizeClass} flex items-center justify-center rounded-lg bg-black/60 border border-white/10 shrink-0 overflow-hidden\\'>${AVATAR_PRESETS['default'].replace(/'/g, "\\'")}</div>'">`;
+    }
+    return `<div class="${sizeClass} ${extraClasses} flex items-center justify-center rounded-lg bg-black/60 border border-white/10 shrink-0 overflow-hidden">${AVATAR_PRESETS['default']}</div>`;
+}
+
 let currentChatRoom = 'global';
 let chatNickname = localStorage.getItem('qtx-chat-nickname') || ('Anon#' + Math.floor(1000 + Math.random() * 9000));
-let chatPfp = localStorage.getItem('qtx-chat-pfp') || '👾';
+let savedPfp = localStorage.getItem('qtx-chat-pfp');
+if (!savedPfp || savedPfp === '👾' || (savedPfp.length <= 4 && !savedPfp.startsWith('http') && !savedPfp.startsWith('preset:'))) {
+    savedPfp = 'preset:default';
+}
+let chatPfp = savedPfp;
 let chatBanner = localStorage.getItem('qtx-chat-banner') || '';
 let chatPin = localStorage.getItem('qtx-chat-pin') || '';
 let chatDisplayName = localStorage.getItem('qtx-chat-display-name') || chatNickname;
@@ -893,6 +1098,8 @@ let currentChatAttachmentName = null;
 let currentChatAttachmentSize = null;
 let chatRoomsList = { global: 0 };
 let chatPollInterval = null;
+let activeChatMessages = [];
+let currentChatSearchQuery = '';
 
 // Track local PIN updates
 window.updateLocalPin = function(val) {
@@ -1128,37 +1335,19 @@ function updateChatIdentityUI() {
         }
     }
 
-    // Check if the pfp is a URL or Base64 string
-    const isUrl = chatPfp.startsWith('http://') || chatPfp.startsWith('https://') || chatPfp.startsWith('data:image/');
-    
     if (headerAvatar) {
-        if (isUrl) {
-            headerAvatar.innerHTML = `<img src="${chatPfp}" class="w-5 h-5 rounded-full object-cover inline-block border border-white/10" alt="avatar" onerror="this.outerHTML='👾'">`;
-        } else {
-            headerAvatar.innerHTML = chatPfp;
-        }
+        headerAvatar.innerHTML = getAvatarHtml(chatPfp, 'w-5 h-5');
     }
 
     if (previewAvatar) {
-        if (isUrl) {
-            previewAvatar.innerHTML = `<img src="${chatPfp}" class="w-full h-full object-cover rounded" alt="avatar" onerror="this.innerHTML='👾'">`;
-        } else {
-            previewAvatar.innerText = chatPfp;
-        }
+        previewAvatar.innerHTML = getAvatarHtml(chatPfp, 'w-full h-full');
     }
 
     if (discordSidebarAvatarContainer) {
-        if (isUrl) {
-            discordSidebarAvatarContainer.innerHTML = `
-                <img src="${chatPfp}" class="w-full h-full object-cover rounded-lg" alt="avatar" onerror="this.outerHTML='👾'">
-                <span class="absolute bottom-[-2px] right-[-2px] w-2.5 h-2.5 bg-emerald-400 border border-[#090a0f] rounded-full animate-pulse shadow-glow"></span>
-            `;
-        } else {
-            discordSidebarAvatarContainer.innerHTML = `
-                ${chatPfp}
-                <span class="absolute bottom-[-2px] right-[-2px] w-2.5 h-2.5 bg-emerald-400 border border-[#090a0f] rounded-full animate-pulse shadow-glow"></span>
-            `;
-        }
+        discordSidebarAvatarContainer.innerHTML = `
+            ${getAvatarHtml(chatPfp, 'w-full h-full')}
+            <span class="absolute bottom-[-2px] right-[-2px] w-2.5 h-2.5 bg-emerald-400 border border-[#090a0f] rounded-full animate-pulse shadow-glow z-10"></span>
+        `;
     }
 }
 
@@ -1232,15 +1421,19 @@ window.addEventListener('keydown', (e) => {
     }
 });
 
-// Select standard Emoji avatar
-window.selectPfpIcon = function(icon) {
-    chatPfp = icon;
+// Select SVG Preset avatar
+window.selectPfpPreset = function(presetKey) {
+    chatPfp = `preset:${presetKey}`;
     localStorage.setItem('qtx-chat-pfp', chatPfp);
     updateChatIdentityUI();
     
     // Hide custom URL container
     const customContainer = document.getElementById('custom-pfp-container');
     if (customContainer) customContainer.classList.add('hidden');
+};
+
+window.selectPfpIcon = function(icon) {
+    window.selectPfpPreset('default');
 };
 
 // Toggle Custom PFP URL inputs
@@ -1636,6 +1829,7 @@ async function fetchChatMessages(forceScroll = false) {
             pinned = data.filter(m => m.pinned);
         }
         
+        activeChatMessages = messages;
         renderChatMessages(messages, forceScroll);
         renderPinnedMessages(pinned);
     } catch (err) {
@@ -1688,10 +1882,7 @@ function renderPinnedMessages(pinned) {
         `;
 
         // Mini avatar rendering
-        const isAvatarUrl = msg.avatar && (msg.avatar.startsWith('http://') || msg.avatar.startsWith('https://') || msg.avatar.startsWith('data:image/'));
-        const avatarHtml = isAvatarUrl 
-            ? `<img src="${msg.avatar}" class="w-4 h-4 rounded object-cover border border-white/10 shrink-0 inline-block align-middle mr-1.5" alt="avatar" onerror="this.outerHTML='👾'">`
-            : `<span class="text-xs shrink-0 leading-none mr-1.5 inline-block align-middle">${msg.avatar || '👾'}</span>`;
+        const avatarHtml = `<div class="mr-1.5 inline-block align-middle shrink-0">${getAvatarHtml(msg.avatar, 'w-4 h-4')}</div>`;
 
         // Render attachments thumbnails inside pinned messages too
         let attachmentThumb = '';
@@ -1760,6 +1951,17 @@ function renderChatMessages(messages, forceScroll = false) {
     const container = document.getElementById('chat-messages-container');
     if (!container) return;
 
+    let displayedMessages = messages;
+    if (currentChatSearchQuery) {
+        displayedMessages = messages.filter(msg => {
+            const query = currentChatSearchQuery.replace(/^@/, '');
+            const matchesUser = (msg.username || '').toLowerCase().includes(query) || 
+                                (msg.displayName || '').toLowerCase().includes(query);
+            const matchesText = (msg.text || '').toLowerCase().includes(currentChatSearchQuery);
+            return matchesUser || matchesText;
+        });
+    }
+
     if (messages.length === 0) {
         container.innerHTML = `
             <div class="flex flex-col items-center justify-center h-full text-gray-500 font-mono text-xs">
@@ -1769,8 +1971,20 @@ function renderChatMessages(messages, forceScroll = false) {
         return;
     }
 
+    if (displayedMessages.length === 0) {
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-full text-gray-400 font-mono text-xs p-8 text-center gap-2">
+                <span>🔍 No messages match your search filter "${escapeHTML(currentChatSearchQuery)}".</span>
+                <button onclick="window.clearChatSearch()" class="text-[10px] text-[#00ff00] hover:underline bg-[#00ff00]/10 border border-[#00ff00]/20 px-2.5 py-1 rounded-lg mt-2 cursor-pointer">
+                    Clear Search
+                </button>
+            </div>
+        `;
+        return;
+    }
+
     let html = '';
-    messages.forEach(msg => {
+    displayedMessages.forEach(msg => {
         const formattedTime = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         const cleanUser = escapeHTML(msg.username || 'Anonymous');
         const cleanDisplayName = escapeHTML(msg.displayName || msg.username || 'Anonymous');
@@ -1779,10 +1993,7 @@ function renderChatMessages(messages, forceScroll = false) {
         const cleanBanner = escapeHTML(msg.banner || '');
         
         // Render PFP / Avatar (Clickable to show Discord profile)
-        const isAvatarUrl = msg.avatar && (msg.avatar.startsWith('http://') || msg.avatar.startsWith('https://') || msg.avatar.startsWith('data:image/'));
-        const avatarHtml = isAvatarUrl 
-            ? `<img src="${msg.avatar}" class="w-6 h-6 rounded-lg object-cover border border-white/10 shrink-0 cursor-pointer hover:opacity-80 transition-all" alt="avatar" onerror="this.outerHTML='👾'" onclick="window.showDiscordProfile('${cleanUser}', '${cleanDisplayName}', '${cleanBio}', '${escapeHTML(msg.avatar || '')}', '${msg.color || '#00ff00'}', '${cleanBanner}')">`
-            : `<span class="text-base shrink-0 leading-none cursor-pointer hover:scale-110 transition-transform inline-block" onclick="window.showDiscordProfile('${cleanUser}', '${cleanDisplayName}', '${cleanBio}', '${escapeHTML(msg.avatar || '')}', '${msg.color || '#00ff00'}', '${cleanBanner}')">${msg.avatar || '👾'}</span>`;
+        const avatarHtml = `<div class="cursor-pointer hover:opacity-80 transition-all inline-block shrink-0" onclick="window.showDiscordProfile('${cleanUser}', '${cleanDisplayName}', '${cleanBio}', '${escapeHTML(msg.avatar || '')}', '${msg.color || '#00ff00'}', '${cleanBanner}')">${getAvatarHtml(msg.avatar, 'w-6 h-6')}</div>`;
 
         // Render attached image
         let attachedImageHtml = '';
@@ -1894,6 +2105,32 @@ function renderChatMessages(messages, forceScroll = false) {
     lastMessageCount = messages.length;
 }
 
+// Search & Filter Chat Messages
+window.filterChatMessages = function() {
+    const input = document.getElementById('chat-search-input');
+    const clearBtn = document.getElementById('chat-search-clear');
+    if (!input) return;
+
+    currentChatSearchQuery = input.value.trim().toLowerCase();
+
+    if (currentChatSearchQuery) {
+        if (clearBtn) clearBtn.classList.remove('hidden');
+    } else {
+        if (clearBtn) clearBtn.classList.add('hidden');
+    }
+
+    renderChatMessages(activeChatMessages, false);
+};
+
+window.clearChatSearch = function() {
+    const input = document.getElementById('chat-search-input');
+    if (input) input.value = '';
+    currentChatSearchQuery = '';
+    const clearBtn = document.getElementById('chat-search-clear');
+    if (clearBtn) clearBtn.classList.add('hidden');
+    renderChatMessages(activeChatMessages, false);
+};
+
 // Send Message
 window.handleChatSubmit = async function(event) {
     if (event) event.preventDefault();
@@ -1979,14 +2216,7 @@ window.showDiscordProfile = function(username, displayName, bio, avatarUrl, colo
     }
 
     const accentColor = color || '#00ff00';
-    const isAvatarUrl = avatarUrl && (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://') || avatarUrl.startsWith('data:image/'));
-    
-    let avatarMarkup = '';
-    if (isAvatarUrl) {
-        avatarMarkup = `<img src="${avatarUrl}" class="w-20 h-20 rounded-xl border-2 border-solid object-cover bg-black" style="border-color: ${accentColor}; box-shadow: 0 0 12px ${accentColor}50" alt="avatar" onerror="this.outerHTML='👾'">`;
-    } else {
-        avatarMarkup = `<div class="w-20 h-20 rounded-xl border-2 border-solid bg-[#0b0c10] flex items-center justify-center text-4xl select-none" style="border-color: ${accentColor}; box-shadow: 0 0 12px ${accentColor}50">${avatarUrl || '👾'}</div>`;
-    }
+    const avatarMarkup = getAvatarHtml(avatarUrl, 'w-20 h-20', 'rounded-xl border-2 border-solid');
 
     modal.innerHTML = `
         <div class="relative w-full max-w-sm bg-[#090a0f] rounded-2xl overflow-hidden border-2 border-solid font-mono text-white animate-scale-up" style="border-color: ${accentColor}80; box-shadow: 0 0 30px ${accentColor}33" onclick="event.stopPropagation()">
