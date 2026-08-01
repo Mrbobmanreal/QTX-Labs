@@ -50,6 +50,10 @@
 }
 
 /* Prevent overscroll bounce on mobile & optimize rendering */
+[hidden] {
+  display: none !important;
+}
+
 html, body {
   overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;

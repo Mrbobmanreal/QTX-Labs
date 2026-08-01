@@ -600,6 +600,7 @@ window.playWebGame = function (iframeUrl, title) {
     if (!container || !iframe) return;
 
     titleEl.innerText = title;
+    container.classList.remove('hidden');
     container.hidden = false;
     if (loader) loader.style.display = 'flex';
 
@@ -635,7 +636,9 @@ window.playWebGame = function (iframeUrl, title) {
                        targetIframeUrl.includes('rawcdn.githack.com')) &&
                       (targetIframeUrl.includes('.html') || targetIframeUrl.includes('.htm') || targetIframeUrl.endsWith('/') || !targetIframeUrl.split('?')[0].includes('.'));
 
-    if (isCdnHtml) {
+    const isStaticDeployment = window.location.hostname.endsWith('github.io') || window.location.protocol === 'file:';
+
+    if (isCdnHtml && !isStaticDeployment) {
         iframe._lastFetchedUrl = targetIframeUrl;
         iframe.src = `/api/raw-proxy?url=${encodeURIComponent(targetIframeUrl)}`;
         iframe.onload = function() {
@@ -656,6 +659,7 @@ window.closeWebGame = function () {
 
     if (!container || !iframe) return;
 
+    container.classList.add('hidden');
     container.hidden = true;
     iframe._lastFetchedUrl = null;
     iframe.src = 'about:blank'; // Stop audio/video playing in background
