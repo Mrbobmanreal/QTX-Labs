@@ -377,8 +377,13 @@ async function startServer() {
   // --- REAL-TIME ANONYMOUS CHAT SYSTEM ---
   const MESSAGES_FILE = path.join(process.cwd(), "chat_messages.json");
   const NAMES_FILE = path.join(process.cwd(), "taken_names.json");
+  const ROOM_PASSWORDS_FILE = path.join(process.cwd(), "room_passwords.json");
+  const ROOM_EXPIRATIONS_FILE = path.join(process.cwd(), "room_expirations.json");
+
   let messagesStore: any[] = [];
   let takenNamesStore: Record<string, string> = {}; // username (lowercase) -> pin/key
+  let roomPasswordsStore: Record<string, string> = {}; // roomName (lowercase) -> passphrase
+  let roomExpirationsStore: Record<string, { createdAt: number; expiresAt: number | null; expiresInHours: number }> = {}; // roomName (lowercase) -> expiration info
 
   try {
     if (fs.existsSync(MESSAGES_FILE)) {
@@ -412,6 +417,24 @@ async function startServer() {
     takenNamesStore = {};
   }
 
+  try {
+    if (fs.existsSync(ROOM_PASSWORDS_FILE)) {
+      roomPasswordsStore = JSON.parse(fs.readFileSync(ROOM_PASSWORDS_FILE, "utf8"));
+    }
+  } catch (err) {
+    console.error("Error loading room passwords store:", err);
+    roomPasswordsStore = {};
+  }
+
+  try {
+    if (fs.existsSync(ROOM_EXPIRATIONS_FILE)) {
+      roomExpirationsStore = JSON.parse(fs.readFileSync(ROOM_EXPIRATIONS_FILE, "utf8"));
+    }
+  } catch (err) {
+    console.error("Error loading room expirations store:", err);
+    roomExpirationsStore = {};
+  }
+
   // Function to save messages to file safely
   const saveMessagesToFile = () => {
     try {
@@ -430,6 +453,46 @@ async function startServer() {
       console.error("Error writing names file:", err);
     }
   };
+
+  const saveRoomPasswordsToFile = () => {
+    try {
+      fs.writeFileSync(ROOM_PASSWORDS_FILE, JSON.stringify(roomPasswordsStore, null, 2), "utf8");
+    } catch (err) {
+      console.error("Error writing room passwords file:", err);
+    }
+  };
+
+  const saveRoomExpirationsToFile = () => {
+    try {
+      fs.writeFileSync(ROOM_EXPIRATIONS_FILE, JSON.stringify(roomExpirationsStore, null, 2), "utf8");
+    } catch (err) {
+      console.error("Error writing room expirations file:", err);
+    }
+  };
+
+  // Check and purge expired rooms & their chat messages
+  const checkAndCleanExpiredRooms = () => {
+    const now = Date.now();
+    let changed = false;
+    Object.keys(roomExpirationsStore).forEach(room => {
+      const expInfo = roomExpirationsStore[room];
+      if (expInfo && expInfo.expiresAt && now >= expInfo.expiresAt) {
+        messagesStore = messagesStore.filter(m => m.room !== room);
+        delete roomPasswordsStore[room];
+        delete roomExpirationsStore[room];
+        changed = true;
+        console.log(`[ROOM EXPIRATION] Auto-deleted expired room #${room}`);
+      }
+    });
+    if (changed) {
+      saveMessagesToFile();
+      saveRoomPasswordsToFile();
+      saveRoomExpirationsToFile();
+    }
+  };
+
+  // Run periodic room expiration cleaner every 30 seconds
+  setInterval(checkAndCleanExpiredRooms, 30000);
 
   // Helper to post an automated system notification
   const postSystemNotification = (room: string, text: string) => {
@@ -521,7 +584,23 @@ async function startServer() {
   // Get messages for a specific room
   app.get("/api/chat/messages", (req, res) => {
     const room = (req.query.room as string) || "global";
+    const password = (req.query.password as string) || "";
     const normalizedRoom = room.toLowerCase();
+
+    // Check if room is password protected
+    const storedPass = roomPasswordsStore[normalizedRoom];
+    if (storedPass) {
+      if (!password || password.trim() !== storedPass) {
+        return res.status(401).json({
+          isLocked: true,
+          room: normalizedRoom,
+          messages: [],
+          pinned: [],
+          error: "Passphrase required to view this room."
+        });
+      }
+    }
+
     const roomMsgs = messagesStore.filter(m => m.room === normalizedRoom);
     
     const pinnedMsgs = roomMsgs.filter(m => m.pinned === true);
@@ -529,7 +608,8 @@ async function startServer() {
 
     res.json({
       messages: recentMsgs,
-      pinned: pinnedMsgs
+      pinned: pinnedMsgs,
+      isLocked: false
     });
   });
 
@@ -609,42 +689,100 @@ async function startServer() {
 
   // Create custom room endpoint
   app.post("/api/chat/create-room", (req, res) => {
-    const { roomName, username } = req.body;
+    const { roomName, username, password, expiresInHours } = req.body;
     if (!roomName || typeof roomName !== "string" || roomName.trim() === "") {
       return res.status(400).json({ error: "Room name is required." });
     }
 
-    const normalizedRoom = roomName.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    const normalizedRoom = roomName.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_-]/g, '');
     if (!normalizedRoom) {
       return res.status(400).json({ error: "Invalid room name. Letters, numbers, hyphens, and underscores only." });
     }
 
     if (normalizedRoom === "global") {
-      return res.status(400).json({ error: "Room 'global' already exists." });
+      return res.status(400).json({ error: "Room 'global' already exists and cannot be password protected." });
     }
+
+    // Process expiration setting (0 = never, 1, 4, 24, 168)
+    const hoursNum = parseInt(expiresInHours, 10);
+    const validHours = isNaN(hoursNum) ? 24 : hoursNum;
+    const expiresAt = validHours > 0 ? Date.now() + (validHours * 3600 * 1000) : null;
+
+    const existingPass = roomPasswordsStore[normalizedRoom];
+    if (existingPass) {
+      // Room is password protected. Check if provided passphrase matches
+      if (!password || password.trim() !== existingPass) {
+        return res.status(401).json({
+          error: "Incorrect passphrase for this protected room.",
+          isLocked: true
+        });
+      }
+      return res.json({
+        success: true,
+        room: normalizedRoom,
+        isLocked: true,
+        message: `Joined protected room #${normalizedRoom}!`,
+        expiresAt: roomExpirationsStore[normalizedRoom]?.expiresAt || null
+      });
+    }
+
+    // New or unlocked room: set passphrase if provided
+    const cleanPassword = (password && typeof password === "string") ? password.trim() : "";
+    if (cleanPassword) {
+      roomPasswordsStore[normalizedRoom] = cleanPassword;
+      saveRoomPasswordsToFile();
+    }
+
+    // Save expiration configuration
+    roomExpirationsStore[normalizedRoom] = {
+      createdAt: Date.now(),
+      expiresAt,
+      expiresInHours: validHours
+    };
+    saveRoomExpirationsToFile();
 
     // Check if room already has messages
     const roomExists = messagesStore.some(m => m.room === normalizedRoom);
-    if (roomExists) {
-      return res.json({ success: true, room: normalizedRoom, message: `Room #${normalizedRoom} already active!` });
+    if (!roomExists) {
+      const creator = username ? username.trim() : "Gamer";
+      const lockText = cleanPassword ? " 🔒 (Password Protected)" : "";
+      const expText = expiresAt 
+        ? ` ⏳ Auto-deletes in ${validHours} hour${validHours > 1 ? 's' : ''}.`
+        : ` ♾️ Permanent room (no expiration).`;
+      postSystemNotification(normalizedRoom, `Welcome to custom channel #${normalizedRoom}! Created by @${creator}.${lockText}${expText}`);
     }
 
-    // Post system welcome message to create the room
-    const creator = username ? username.trim() : "Gamer";
-    postSystemNotification(normalizedRoom, `Welcome to the custom channel #${normalizedRoom}! Created by @${creator}.`);
-
-    res.json({ success: true, room: normalizedRoom, message: `Room #${normalizedRoom} successfully created!` });
+    res.json({
+      success: true,
+      room: normalizedRoom,
+      isLocked: !!cleanPassword,
+      expiresAt,
+      expiresInHours: validHours,
+      message: cleanPassword ? `Room #${normalizedRoom} created & locked with passphrase!` : `Room #${normalizedRoom} created!`
+    });
   });
 
   // Post a new message
   app.post("/api/chat/messages", async (req, res) => {
-    const { room, username, text, avatar, banner, image, video, key, displayName, bio, fileData, fileName, fileSize, fileType } = req.body;
+    const { room, username, password, text, avatar, banner, image, video, key, displayName, bio, fileData, fileName, fileSize, fileType } = req.body;
     if (!text && !image && !video && !fileData) {
       return res.status(400).json({ error: "Message text, image, video, or file is required" });
     }
 
     const cleanedRoom = (room && typeof room === "string" && room.trim() !== "") ? room.trim().toLowerCase() : "global";
     const cleanedUsername = (username && typeof username === "string" && username.trim() !== "") ? username.trim() : "Anonymous";
+
+    // 0. Password check for protected room
+    const requiredRoomPass = roomPasswordsStore[cleanedRoom];
+    if (requiredRoomPass) {
+      const userPass = (password && typeof password === "string") ? password.trim() : "";
+      if (userPass !== requiredRoomPass) {
+        return res.status(401).json({
+          error: "Incorrect passphrase for this protected room.",
+          isLocked: true
+        });
+      }
+    }
 
     const trimmedUsername = cleanedUsername.substring(0, 30);
     const trimmedText = text ? text.substring(0, 2000) : "";
@@ -715,12 +853,26 @@ async function startServer() {
 
   // Get active rooms and their counts
   app.get("/api/chat/rooms", (req, res) => {
+    checkAndCleanExpiredRooms();
+
     const counts: Record<string, number> = { global: 0 };
     messagesStore.forEach(m => {
       const r = m.room || "global";
       counts[r] = (counts[r] || 0) + 1;
     });
-    res.json(counts);
+    // Ensure all password protected or expiration rooms exist in counts
+    Object.keys(roomPasswordsStore).forEach(r => {
+      if (counts[r] === undefined) counts[r] = 0;
+    });
+    Object.keys(roomExpirationsStore).forEach(r => {
+      if (counts[r] === undefined) counts[r] = 0;
+    });
+
+    res.json({
+      counts,
+      lockedRooms: Object.keys(roomPasswordsStore),
+      expirations: roomExpirationsStore
+    });
   });
 
   // Vite middleware for development

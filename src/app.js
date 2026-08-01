@@ -18,6 +18,27 @@ try {
     console.error("Failed to load recently played list:", e);
 }
 
+let gamePlayCounts = {};
+try {
+    gamePlayCounts = JSON.parse(localStorage.getItem('qtx-game-plays') || '{}');
+} catch (e) {
+    console.error("Failed to load game play counts:", e);
+}
+
+function getGamePlayCount(title) {
+    return gamePlayCounts[title] || 0;
+}
+
+function incrementGamePlayCount(title) {
+    if (!title) return;
+    gamePlayCounts[title] = (gamePlayCounts[title] || 0) + 1;
+    try {
+        localStorage.setItem('qtx-game-plays', JSON.stringify(gamePlayCounts));
+    } catch (e) {
+        console.error("Failed to save game play counts:", e);
+    }
+}
+
 function isGameStorageSaved(game) {
     if (!game) return false;
     
@@ -98,7 +119,11 @@ function recordRecentlyPlayed(iframeUrl, title) {
         console.error("Failed to save recently played games:", e);
     }
 
+    // Increment game play count
+    incrementGamePlayCount(gameObj.title);
+
     renderRecentlyPlayed();
+    renderGames();
 }
 
 function renderRecentlyPlayed() {
@@ -135,29 +160,29 @@ function renderRecentlyPlayed() {
                </span>`;
 
         html += `
-            <div class="group relative overflow-hidden rounded-xl border border-white/10 bg-[#0f0f15]/90 p-3.5 flex flex-col justify-between hover:border-[#00ff00]/50 hover:bg-[#14141c] hover:shadow-[0_0_20px_rgba(0,255,0,0.08)] transition-all duration-300">
+            <div class="group relative overflow-hidden rounded-xl border border-white/10 bg-[#0f0f15]/90 p-3.5 flex flex-col justify-between hover:border-[#00f0ff]/50 hover:bg-[#14141c] hover:shadow-[0_0_20px_rgba(0,255,0,0.08)] transition-all duration-300">
                 <div class="flex gap-3 items-center">
                     <div class="w-16 h-12 rounded-lg bg-black overflow-hidden shrink-0 border border-white/10 relative">
                         <img src="${thumbnail}" alt="${game.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" referrerPolicy="no-referrer">
                     </div>
                     <div class="min-w-0 flex-1">
                         <div class="flex items-center justify-between gap-1 mb-0.5">
-                            <span class="text-[8px] font-mono font-bold text-[#00ff00] uppercase tracking-wider block truncate">
+                            <span class="text-[8px] font-mono font-bold text-[#00f0ff] uppercase tracking-wider block truncate">
                                 ${game.category || 'Arcade'}
                             </span>
                             ${saveBadgeHtml}
                         </div>
-                        <h4 class="text-xs font-bold text-white font-mono truncate group-hover:text-[#00ff00] transition-colors">
+                        <h4 class="text-xs font-bold text-white font-mono truncate group-hover:text-[#00f0ff] transition-colors">
                             ${game.title}
                         </h4>
                     </div>
                 </div>
                 <div class="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between gap-2">
                     <span class="text-[9px] text-gray-500 font-mono flex items-center gap-1">
-                        <span class="w-1.5 h-1.5 rounded-full bg-[#00ff00] animate-pulse"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#00f0ff] animate-pulse"></span>
                         Recent
                     </span>
-                    <button onclick="window.launchGame('${escapedIframeUrl}', '${escapedTitle}')" class="bg-[#00ff00]/10 hover:bg-[#00ff00] text-[#00ff00] hover:text-black border border-[#00ff00]/30 hover:border-transparent text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1">
+                    <button onclick="window.launchGame('${escapedIframeUrl}', '${escapedTitle}')" class="bg-[#00f0ff]/10 hover:bg-[#00f0ff] text-[#00f0ff] hover:text-black border border-[#00f0ff]/30 hover:border-transparent text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1">
                         ▶ PLAY AGAIN
                     </button>
                 </div>
@@ -204,10 +229,18 @@ window.showMsg = function (text) {
     const txt = $id('msg-text');
     if (layer && txt) {
         txt.innerText = text;
+        const container = layer.firstElementChild;
+        if (container) {
+            if (text.includes('ERROR')) {
+                container.className = "bg-red-950/90 border border-red-500/60 text-red-400 px-5 py-2.5 rounded-xl shadow-2xl backdrop-blur-md font-mono text-xs font-bold flex items-center gap-2 tracking-wider";
+            } else {
+                container.className = "bg-black/90 border border-[#00f0ff]/30 text-[#00f0ff] px-4 py-2 rounded-xl shadow-2xl backdrop-blur-md font-mono text-xs flex items-center gap-2";
+            }
+        }
         layer.hidden = false;
         setTimeout(() => {
             layer.hidden = true;
-        }, 2500);
+        }, 3000);
     }
 };
 
@@ -229,7 +262,7 @@ function renderCategories() {
 
     const sortedCategories = Array.from(categories).sort((a, b) => a.localeCompare(b));
 
-    let html = `<button onclick="window.selectCategory('All')" class="category-pill active bg-[#00ff00]/10 border border-[#00ff00]/30 text-[#00ff00] px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all">ALL</button>`;
+    let html = `<button onclick="window.selectCategory('All')" class="category-pill active bg-[#00f0ff]/10 border border-[#00f0ff]/30 text-[#00f0ff] px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all">ALL</button>`;
     
     // Add dedicated Favorites category
     html += `<button onclick="window.selectCategory('Favorites')" class="category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10">❤️ FAVORITES</button>`;
@@ -262,13 +295,29 @@ async function loadGamesPortal() {
 
     grid.innerHTML = `
         <div class="col-span-full text-center py-12 text-gray-500 font-mono">
-            <span class="inline-block animate-spin mr-2 border-2 border-[#00ff00] border-t-transparent w-4 h-4 rounded-full align-middle"></span>
+            <span class="inline-block animate-spin mr-2 border-2 border-[#00f0ff] border-t-transparent w-4 h-4 rounded-full align-middle"></span>
             Acquiring premium games inventory...
         </div>
     `;
 
     try {
-        const response = await fetch('./src/games.json');
+        let response;
+        try {
+            response = await fetch('./src/games.json');
+            if (!response.ok) throw new Error();
+        } catch (e1) {
+            try {
+                response = await fetch('src/games.json');
+                if (!response.ok) throw new Error();
+            } catch (e2) {
+                try {
+                    response = await fetch('./games.json');
+                    if (!response.ok) throw new Error();
+                } catch (e3) {
+                    response = await fetch('games.json');
+                }
+            }
+        }
         if (!response.ok) throw new Error("HTTP Status " + response.status);
         const data = await response.json();
         
@@ -289,12 +338,6 @@ async function loadGamesPortal() {
 
         // Merge standard + custom games
         gamesData = [...customGames, ...baseGames];
-        
-        // Update live inventory count
-        const countEl = $id('inventory-count');
-        if (countEl) {
-            countEl.innerText = `${gamesData.length} Premium High-Performance Unblocked Games`;
-        }
         
         renderCategories();
         renderGames();
@@ -360,7 +403,7 @@ function renderPaginationControls(totalResults, totalPages) {
 
     for (let p = startPage; p <= endPage; p++) {
         if (p === currentPage) {
-            html += `<button class="px-3 py-1.5 bg-[#00ff00]/10 border border-[#00ff00]/30 text-[#00ff00] rounded-lg font-bold transition-all select-none">${p}</button>`;
+            html += `<button class="px-3 py-1.5 bg-[#00f0ff]/10 border border-[#00f0ff]/30 text-[#00f0ff] rounded-lg font-bold transition-all select-none">${p}</button>`;
         } else {
             html += `<button onclick="window.changePage(${p})" class="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/5 rounded-lg transition-all cursor-pointer font-bold select-none">${p}</button>`;
         }
@@ -399,10 +442,11 @@ function renderGames() {
     const filtered = gamesData.filter(game => {
         const matchesCategory = currentCategory === 'All' || 
                                 (currentCategory === 'Favorites' ? isFavorited(game.id) : game.category === currentCategory);
-        const matchesSearch = game.title.toLowerCase().includes(searchVal) || 
-                              (game.description || '').toLowerCase().includes(searchVal) ||
-                              (game.category || '').toLowerCase().includes(searchVal);
-        return matchesCategory && matchesSearch;
+        if (!matchesCategory) return false;
+        if (!searchVal) return true;
+        return game.title.toLowerCase().includes(searchVal) || 
+               (game.description || '').toLowerCase().includes(searchVal) ||
+               (game.category || '').toLowerCase().includes(searchVal);
     });
 
     if (filtered.length === 0) {
@@ -415,6 +459,15 @@ function renderGames() {
         return;
     }
 
+    // Determine max play count across played games efficiently
+    let maxPlays = 0;
+    const playCounts = Object.values(gamePlayCounts);
+    for (let i = 0; i < playCounts.length; i++) {
+        if (playCounts[i] > maxPlays) {
+            maxPlays = playCounts[i];
+        }
+    }
+
     const totalPages = Math.ceil(filtered.length / GAMES_PER_PAGE) || 1;
     if (currentPage > totalPages) {
         currentPage = totalPages;
@@ -425,22 +478,37 @@ function renderGames() {
 
     const paginatedGames = filtered.slice((currentPage - 1) * GAMES_PER_PAGE, currentPage * GAMES_PER_PAGE);
 
+    const fragment = document.createDocumentFragment();
+
     paginatedGames.forEach(game => {
+        const playCount = getGamePlayCount(game.title);
+        const isMostPlayed = maxPlays > 0 && playCount === maxPlays;
+
         const card = document.createElement('div');
-        card.className = "group relative overflow-hidden rounded-2xl border border-white/5 bg-[#0f0f15]/80 flex flex-col justify-between transition-all duration-300 hover:border-[#00ff00]/40 hover:bg-[#14141c] hover:shadow-[0_0_25px_rgba(0,255,0,0.06)]";
+        card.className = isMostPlayed 
+            ? "group relative overflow-hidden rounded-2xl border-2 border-amber-500/60 bg-[#16120b]/90 flex flex-col justify-between transition-colors duration-200 hover:border-amber-400 hover:bg-[#1f180e] game-card-optimized" 
+            : "group relative overflow-hidden rounded-2xl border border-white/5 bg-[#0f0f15]/80 flex flex-col justify-between transition-colors duration-200 hover:border-[#00f0ff]/40 hover:bg-[#14141c] game-card-optimized";
         
         const thumbnail = game.thumbnail || "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=400&h=250";
         const escapedTitle = game.title.replace(/'/g, "\\'");
         const escapedIframeUrl = game.iframeUrl.replace(/'/g, "\\'");
 
+        const badgeHtml = isMostPlayed ? `
+            <span class="absolute top-3 left-3 text-[9px] font-mono font-black text-amber-300 bg-black/90 border border-amber-500/70 px-2.5 py-1 rounded-md uppercase tracking-wider flex items-center gap-1 z-10">
+                🔥 MOST PLAYED
+            </span>
+        ` : `
+            <span class="absolute top-3 left-3 text-[9px] font-mono font-bold text-white bg-black/80 border border-white/10 px-2.5 py-1 rounded-md uppercase tracking-wider">
+                ${game.category}
+            </span>
+        `;
+
         card.innerHTML = `
             <div>
                 <!-- Image container -->
                 <div class="relative w-full aspect-video overflow-hidden border-b border-white/5 bg-black">
-                    <img src="${thumbnail}" alt="${game.title}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" referrerPolicy="no-referrer">
-                    <span class="absolute top-3 left-3 text-[9px] font-mono font-bold text-white bg-black/80 border border-white/10 px-2.5 py-1 rounded-md uppercase tracking-wider">
-                        ${game.category}
-                    </span>
+                    <img src="${thumbnail}" alt="${game.title}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" referrerPolicy="no-referrer">
+                    ${badgeHtml}
                     <button onclick="window.toggleFavorite('${game.id}', event)" class="absolute top-3 right-3 flex items-center justify-center w-8 h-8 rounded-full bg-black/60 hover:bg-black/85 border border-white/10 text-gray-400 hover:text-red-500 transition-all cursor-pointer z-10" title="Toggle Favorite">
                         ${isFavorited(game.id) 
                             ? `<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-red-500 fill-current" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>`
@@ -450,9 +518,11 @@ function renderGames() {
                 </div>
                 <!-- Content -->
                 <div class="p-5">
-                    <h3 class="text-base font-bold text-white tracking-tight transition-colors group-hover:text-[#00ff00] font-mono">
-                        ${game.title}
-                    </h3>
+                    <div class="flex items-center justify-between gap-2 mb-1">
+                        <h3 class="text-base font-bold text-white tracking-tight transition-colors group-hover:text-[#00f0ff] font-mono truncate">
+                            ${game.title}
+                        </h3>
+                    </div>
                     <p class="text-xs text-gray-400 mt-2 font-sans line-clamp-3 leading-relaxed">
                         ${game.description}
                     </p>
@@ -460,14 +530,18 @@ function renderGames() {
             </div>
             <!-- Action Footer -->
             <div class="p-5 pt-0 mt-auto border-t border-white/[0.02] flex items-center justify-between">
-                <span class="text-[10px] font-mono text-gray-500">Unblocked Portal</span>
-                <button onclick="window.launchGame('${escapedIframeUrl}', '${escapedTitle}')" class="bg-[#00ff00]/10 border border-[#00ff00]/20 hover:bg-[#00ff00] hover:text-black hover:border-transparent text-[#00ff00] text-xs font-bold font-mono px-4 py-2 rounded-lg transition-all cursor-pointer flex items-center gap-1.5">
+                <span class="text-[10px] font-mono ${isMostPlayed ? 'text-amber-300 font-bold' : 'text-gray-400'} flex items-center gap-1">
+                    <span class="${isMostPlayed ? 'text-amber-400' : 'text-cyan-400'}">🎮</span> ${playCount} ${playCount === 1 ? 'play' : 'plays'}
+                </span>
+                <button onclick="window.launchGame('${escapedIframeUrl}', '${escapedTitle}')" class="${isMostPlayed ? 'bg-amber-500/20 border border-amber-500/40 hover:bg-amber-400 hover:text-black hover:border-transparent text-amber-300' : 'bg-[#00f0ff]/10 border border-[#00f0ff]/20 hover:bg-[#00f0ff] hover:text-black hover:border-transparent text-[#00f0ff]'} text-xs font-bold font-mono px-4 py-2 rounded-lg transition-all cursor-pointer flex items-center gap-1.5">
                     PLAY NOW &rarr;
                 </button>
             </div>
         `;
-        grid.appendChild(card);
+        fragment.appendChild(card);
     });
+
+    grid.appendChild(fragment);
 
     renderPaginationControls(filtered.length, totalPages);
 }
@@ -484,7 +558,7 @@ window.selectCategory = function (category) {
                         (category === 'Favorites' && text.includes('FAVORITES')) ||
                         (category === 'All' && text.toLowerCase() === 'all');
         if (isMatch) {
-            pill.className = "category-pill active bg-[#00ff00]/10 border border-[#00ff00]/30 text-[#00ff00] px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all";
+            pill.className = "category-pill active bg-[#00f0ff]/10 border border-[#00f0ff]/30 text-[#00f0ff] px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all";
         } else {
             pill.className = "category-pill bg-white/5 border border-white/5 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition-all hover:text-white hover:bg-white/10";
         }
@@ -493,21 +567,24 @@ window.selectCategory = function (category) {
     renderGames();
 };
 
+let filterDebounceTimer = null;
 window.filterGames = function () {
-    currentPage = 1;
-    renderGames();
+    if (filterDebounceTimer) clearTimeout(filterDebounceTimer);
+    filterDebounceTimer = setTimeout(() => {
+        currentPage = 1;
+        renderGames();
 
-    const searchInput = $id('game-search');
-    if (searchInput && searchInput.value.trim().length > 0) {
-        const grid = $id('games-grid');
-        if (grid) {
-            const rect = grid.getBoundingClientRect();
-            // Scroll if top of games grid is below 70% of viewport or scrolled out above
-            if (rect.top > window.innerHeight * 0.7 || rect.top < 0) {
-                grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const searchInput = $id('game-search');
+        if (searchInput && searchInput.value.trim().length > 0) {
+            const grid = $id('games-grid');
+            if (grid) {
+                const rect = grid.getBoundingClientRect();
+                if (rect.top > window.innerHeight * 0.7 || rect.top < 0) {
+                    grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
             }
         }
-    }
+    }, 120);
 };
 
 window.playWebGame = function (iframeUrl, title) {
@@ -609,8 +686,49 @@ window.toggleWebGameFullscreen = function () {
     }
 };
 
-// --- NAVIGATION TAB SWITCHER LOGIC ---
-window.switchTab = function (tabName) {
+// --- SIDEBAR TOGGLE LOGIC ---
+window.toggleSidebar = function (forceState) {
+    const sidebar = document.getElementById('sidebar-nav');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (!sidebar) return;
+
+    const isCurrentlyHidden = sidebar.classList.contains('-translate-x-full');
+    const show = (forceState !== undefined) ? forceState : isCurrentlyHidden;
+
+    if (show) {
+        sidebar.classList.remove('-translate-x-full');
+        if (overlay) overlay.classList.remove('hidden');
+    } else {
+        sidebar.classList.add('-translate-x-full');
+        if (overlay) overlay.classList.add('hidden');
+    }
+};
+
+// --- NAVIGATION TAB SWITCHER LOGIC & TAB LOCK PROTECTION ---
+window.unlockedTabSessions = {};
+window.pendingTabToUnlock = null;
+
+window.switchTab = function (tabName, forceUnlock = false) {
+    if (tabName === 'chat') {
+        window.showMsg("ERROR: SUN");
+        return;
+    }
+
+    const lockedTabs = JSON.parse(localStorage.getItem('qtx_locked_tabs') || '{}');
+    if (!forceUnlock && lockedTabs[tabName] && !window.unlockedTabSessions[tabName]) {
+        window.pendingTabToUnlock = tabName;
+        const nameEl = document.getElementById('unlock-tab-name');
+        if (nameEl) nameEl.innerText = tabName;
+        const modal = document.getElementById('unlock-tab-modal');
+        if (modal) modal.classList.remove('hidden');
+        const pinInput = document.getElementById('unlock-tab-pin');
+        if (pinInput) {
+            pinInput.value = '';
+            setTimeout(() => pinInput.focus(), 100);
+        }
+        return;
+    }
+
     // Hide all tab views
     const tabViews = document.querySelectorAll('.tab-view');
     tabViews.forEach(view => {
@@ -625,22 +743,102 @@ window.switchTab = function (tabName) {
 
     // Update navigation buttons active states
     const tabBtns = document.querySelectorAll('.tab-btn');
+    const isLight = document.body.classList.contains('light-theme');
     tabBtns.forEach(btn => {
         const isSelected = btn.id === `tab-${tabName}`;
         if (isSelected) {
             btn.classList.add('active');
-            if (document.body.classList.contains('light-theme')) {
-                btn.className = "tab-btn active px-4 py-2 rounded-lg font-bold transition-all text-[#047857] bg-white cursor-pointer";
+            if (isLight) {
+                btn.className = "tab-btn active w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold transition-all text-[#047857] bg-white shadow-md cursor-pointer text-left group";
             } else {
-                btn.className = "tab-btn active px-4 py-2 rounded-lg font-bold transition-all text-[#00ff00] bg-white/10 cursor-pointer";
+                btn.className = "tab-btn active w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold transition-all text-[#00f0ff] bg-white/10 border border-[#00f0ff]/30 cursor-pointer text-left group";
             }
         } else {
             btn.classList.remove('active');
-            btn.className = "tab-btn px-4 py-2 rounded-lg font-bold transition-all text-gray-400 hover:text-white cursor-pointer";
+            btn.className = "tab-btn w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold transition-all text-gray-400 hover:text-white hover:bg-white/5 border border-transparent cursor-pointer text-left group";
         }
     });
 
+    // Auto close sidebar on smaller screen sizes after selection
+    if (window.innerWidth < 1024) {
+        window.toggleSidebar(false);
+    }
+
     window.showMsg(`Switched to ${tabName.toUpperCase()} view`);
+};
+
+window.toggleTabLock = function(tabName) {
+    const lockedTabs = JSON.parse(localStorage.getItem('qtx_locked_tabs') || '{}');
+    lockedTabs[tabName] = !lockedTabs[tabName];
+    localStorage.setItem('qtx_locked_tabs', JSON.stringify(lockedTabs));
+    window.updateTabLockUI();
+    window.showMsg(`${tabName.toUpperCase()} tab is now ${lockedTabs[tabName] ? 'LOCKED 🔒' : 'UNLOCKED 🔓'}`);
+};
+
+window.saveTabPin = function() {
+    const pinInput = document.getElementById('tab-pin-input');
+    const pin = pinInput ? pinInput.value.trim() : '';
+    if (!pin) {
+        window.showMsg("Please enter a non-empty PIN!");
+        return;
+    }
+    localStorage.setItem('qtx_tab_pin', pin);
+    if (pinInput) pinInput.value = '';
+    window.showMsg("Security PIN updated successfully! 🔒");
+};
+
+window.submitTabUnlock = function() {
+    const pinInput = document.getElementById('unlock-tab-pin');
+    const entered = pinInput ? pinInput.value.trim() : '';
+    const savedPin = localStorage.getItem('qtx_tab_pin') || '1234';
+
+    if (entered === savedPin) {
+        const targetTab = window.pendingTabToUnlock;
+        if (targetTab) {
+            window.unlockedTabSessions[targetTab] = true;
+            window.closeUnlockTabModal();
+            window.switchTab(targetTab, true);
+            window.showMsg(`Access Granted! Welcome to ${targetTab.toUpperCase()} 🔓`);
+        }
+    } else {
+        window.showMsg("❌ Incorrect PIN Code! (Default PIN: 1234)");
+    }
+};
+
+window.closeUnlockTabModal = function() {
+    const modal = document.getElementById('unlock-tab-modal');
+    if (modal) modal.classList.add('hidden');
+    window.pendingTabToUnlock = null;
+};
+
+window.updateTabLockUI = function() {
+    const lockedTabs = JSON.parse(localStorage.getItem('qtx_locked_tabs') || '{}');
+    const tabs = ['chat', 'games', 'news', 'settings'];
+
+    tabs.forEach(t => {
+        const isLocked = !!lockedTabs[t];
+        // Sidebar badge
+        const badge = document.getElementById(`lock-badge-${t}`);
+        if (badge) {
+            if (isLocked) badge.classList.remove('hidden');
+            else badge.classList.add('hidden');
+        }
+
+        // Settings toggle status button
+        const statusEl = document.getElementById(`status-lock-${t}`);
+        const btnEl = document.getElementById(`toggle-lock-${t}`);
+        if (statusEl) {
+            statusEl.innerText = isLocked ? '🔒 Locked' : '🔓 Off';
+            statusEl.className = isLocked ? 'text-xs text-amber-400 font-bold' : 'text-xs text-gray-500';
+        }
+        if (btnEl) {
+            if (isLocked) {
+                btnEl.className = "p-3 rounded-xl border font-mono text-xs font-bold transition-all cursor-pointer flex items-center justify-between bg-amber-500/10 border-amber-500/40 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.15)]";
+            } else {
+                btnEl.className = "p-3 rounded-xl border font-mono text-xs font-bold transition-all cursor-pointer flex items-center justify-between bg-black/40 border-white/10 text-gray-300 hover:text-white";
+            }
+        }
+    });
 };
 
 // --- LIGHT/DARK THEME SELECTOR LOGIC ---
@@ -664,7 +862,7 @@ window.setTheme = function (themeName) {
 
         // Style the buttons
         if (btnDark && btnLight) {
-            btnDark.className = "px-4 py-2 rounded-lg font-mono text-xs font-bold transition-all text-[#00ff00] bg-white/10 cursor-pointer";
+            btnDark.className = "px-4 py-2 rounded-lg font-mono text-xs font-bold transition-all text-[#00f0ff] bg-white/10 cursor-pointer";
             btnLight.className = "px-4 py-2 rounded-lg font-mono text-xs font-bold transition-all text-gray-400 hover:text-white cursor-pointer";
         }
     }
@@ -676,11 +874,162 @@ window.setTheme = function (themeName) {
         if (themeName === 'light') {
             activeTabBtn.className = "tab-btn active px-4 py-2 rounded-lg font-bold transition-all text-[#047857] bg-white cursor-pointer";
         } else {
-            activeTabBtn.className = "tab-btn active px-4 py-2 rounded-lg font-bold transition-all text-[#00ff00] bg-white/10 cursor-pointer";
+            activeTabBtn.className = "tab-btn active px-4 py-2 rounded-lg font-bold transition-all text-[#00f0ff] bg-white/10 cursor-pointer";
         }
     }
 
     window.showMsg(`Theme updated to ${themeName.toUpperCase()}`);
+};
+
+// --- LANGUAGE SELECTOR LOGIC ---
+const PORTAL_TRANSLATIONS = {
+    en: {
+        navGames: "GAMES",
+        navChat: "CHAT",
+        navNews: "NEWS",
+        navSettings: "SETTINGS",
+        navMenu: "Tabs Menu",
+        searchPlaceholder: "Search unblocked games...",
+        settingsTitle: "Portal Settings & Customization",
+        themeTitle: "🎨 Theme Selector",
+        themeDesc: "Toggle between light mode and dark mode for comfortable navigation.",
+        wallpaperTitle: "🌌 Page Wallpaper Selector",
+        wallpaperDesc: "Personalize your gaming portal with premium preset backgrounds or import your own animated GIF / image.",
+        langTitle: "🌐 Language Selector",
+        langDesc: "Choose your preferred language for portal controls and interface.",
+        latestUpdates: "Latest Portal Updates",
+        msg: "Language set to English"
+    },
+    es: {
+        navGames: "JUEGOS",
+        navChat: "CHAT",
+        navNews: "NOTICIAS",
+        navSettings: "CONFIGURACIÓN",
+        navMenu: "Menú de Pestañas",
+        searchPlaceholder: "Buscar juegos desbloqueados...",
+        settingsTitle: "Configuración y Personalización del Portal",
+        themeTitle: "🎨 Selector de Tema",
+        themeDesc: "Cambia entre modo claro y modo oscuro para una navegación cómoda.",
+        wallpaperTitle: "🌌 Selector de Fondo de Pantalla",
+        wallpaperDesc: "Personaliza tu portal con fondos predeterminados o importa tu propio GIF/imagen.",
+        langTitle: "🌐 Selector de Idioma",
+        langDesc: "Selecciona tu idioma preferido para los controles del portal.",
+        latestUpdates: "Últimas Actualizaciones del Portal",
+        msg: "Idioma cambiado a Español"
+    },
+    fr: {
+        navGames: "JEUX",
+        navChat: "CHAT",
+        navNews: "NOUVELLES",
+        navSettings: "PARAMÈTRES",
+        navMenu: "Menu Onglets",
+        searchPlaceholder: "Rechercher des jeux débloqués...",
+        settingsTitle: "Paramètres et Personnalisation du Portail",
+        themeTitle: "🎨 Sélecteur de Thème",
+        themeDesc: "Basculez entre le mode clair et sombre pour une navigation confortable.",
+        wallpaperTitle: "🌌 Sélecteur de Fond d'Écran",
+        wallpaperDesc: "Personnalisez votre portail avec des fonds d'écran prédéfinis ou importez votre GIF.",
+        langTitle: "🌐 Sélecteur de Langue",
+        langDesc: "Choisissez votre langue préférée pour l'interface du portail.",
+        latestUpdates: "Dernières Mises à Jour du Portail",
+        msg: "Langue configurée en Français"
+    },
+    de: {
+        navGames: "SPIELE",
+        navChat: "CHAT",
+        navNews: "NEUIGKEITEN",
+        navSettings: "EINSTELLUNGEN",
+        navMenu: "Tabs Menü",
+        searchPlaceholder: "Unblockierte Spiele suchen...",
+        settingsTitle: "Portal Einstellungen & Anpassung",
+        themeTitle: "🎨 Themen-Auswahl",
+        themeDesc: "Wechseln Sie zwischen hellem und dunklem Modus für bequeme Navigation.",
+        wallpaperTitle: "🌌 Hintergrundbild-Auswahl",
+        wallpaperDesc: "Personalisieren Sie Ihr Portal mit Vorlagen oder eigenen GIFs.",
+        langTitle: "🌐 Sprachauswahl",
+        langDesc: "Wählen Sie Ihre bevorzugte Sprache für die Steuerung aus.",
+        latestUpdates: "Neueste Portal-Updates",
+        msg: "Sprache auf Deutsch eingestellt"
+    },
+    ja: {
+        navGames: "ゲーム",
+        navChat: "チャット",
+        navNews: "ニュース",
+        navSettings: "設定",
+        navMenu: "タブメニュー",
+        searchPlaceholder: "ゲームを検索...",
+        settingsTitle: "ポータル設定とカスタマイズ",
+        themeTitle: "🎨 テーマ選択",
+        themeDesc: "ライトモードとダークモードを切り替えます。",
+        wallpaperTitle: "🌌 壁紙セレクター",
+        wallpaperDesc: "背景画像をプリセットやオリジナルGIFにカスタマイズ。",
+        langTitle: "🌐 言語選択",
+        langDesc: "ポータルの表示言語を選択します。",
+        latestUpdates: "最新アップデート",
+        msg: "言語を日本語に設定しました"
+    },
+    pt: {
+        navGames: "JOGOS",
+        navChat: "CHAT",
+        navNews: "NOTÍCIAS",
+        navSettings: "CONFIGURAÇÕES",
+        navMenu: "Menu de Abas",
+        searchPlaceholder: "Pesquisar jogos desbloqueados...",
+        settingsTitle: "Configurações e Personalização do Portal",
+        themeTitle: "🎨 Seletor de Tema",
+        themeDesc: "Alterne entre o modo claro e escuro para navegação confortável.",
+        wallpaperTitle: "🌌 Seletor de Plano de Fundo",
+        wallpaperDesc: "Personalize seu portal com planos de fundo predefinidos ou importe seu GIF.",
+        langTitle: "🌐 Seletor de Idioma",
+        langDesc: "Escolha seu idioma preferido para a interface do portal.",
+        latestUpdates: "Últimas Atualizaciones do Portal",
+        msg: "Idioma definido para Português"
+    }
+};
+
+window.setLanguage = function (lang, showToast = true) {
+    const t = PORTAL_TRANSLATIONS[lang] || PORTAL_TRANSLATIONS.en;
+    localStorage.setItem('qtx_language', lang);
+
+    // Update Language Button States
+    ['en', 'es', 'fr', 'de', 'ja', 'pt'].forEach(code => {
+        const btn = document.getElementById(`lang-btn-${code}`);
+        if (btn) {
+            if (code === lang) {
+                btn.className = "px-3 py-2.5 rounded-xl border text-center transition-all font-mono text-xs font-bold cursor-pointer bg-[#00f0ff]/10 border-[#00f0ff]/40 text-[#00f0ff] flex items-center justify-center gap-1.5 shadow-[0_0_12px_rgba(0,240,255,0.2)]";
+            } else {
+                btn.className = "px-3 py-2.5 rounded-xl border text-center transition-all font-mono text-xs font-bold cursor-pointer bg-black/40 border-white/10 text-gray-400 hover:text-white hover:border-white/20 flex items-center justify-center gap-1.5";
+            }
+        }
+    });
+
+    // Update DOM text elements if present
+    const elemMap = {
+        'nav-lbl-games': t.navGames,
+        'nav-lbl-chat': t.navChat,
+        'nav-lbl-news': t.navNews,
+        'nav-lbl-settings': t.navSettings,
+        'lbl-settings-title': t.settingsTitle,
+        'lbl-theme-title': t.themeTitle,
+        'lbl-theme-desc': t.themeDesc,
+        'lbl-wallpaper-title': t.wallpaperTitle,
+        'lbl-wallpaper-desc': t.wallpaperDesc,
+        'lbl-lang-title': t.langTitle,
+        'lbl-lang-desc': t.langDesc
+    };
+
+    Object.keys(elemMap).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = elemMap[id];
+    });
+
+    // Update search placeholder
+    const searchInput = document.getElementById('game-search');
+    if (searchInput) searchInput.placeholder = t.searchPlaceholder;
+
+    if (showToast && window.showMsg) {
+        window.showMsg(t.msg);
+    }
 };
 
 // --- LOCAL DATA SAVES MANAGEMENT ---
@@ -719,7 +1068,7 @@ window.downloadWebDataJSON = function() {
 window.downloadProxyLinksTXT = function() {
     try {
         let txt = "=========================================================\n";
-        txt += "   QTX LABS PORTAL - UNBLOCKED WEB GAMES DIRECTORY\n";
+        txt += "   RE-VOLT PORTAL - UNBLOCKED WEB GAMES DIRECTORY\n";
         txt += `   Exported: ${new Date().toLocaleString()}\n`;
         txt += "=========================================================\n\n";
         
@@ -757,10 +1106,10 @@ const PRESET_WALLPAPERS = {
 };
 
 const SPRITE_PRESETS = {
-    invader: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="%2300ff00"><path d="M6 2h12v2H6zm-2 2h16v2H4zm-2 2h20v2H2zm0 2h6v2H2zm14 0h6v2h-6zm-14 2h20v2H2zm4 2h12v2H6zm-2 2h4v2H4zm12 0h4v2h-4z"/></svg>',
+    invader: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="%2300f0ff"><path d="M6 2h12v2H6zm-2 2h16v2H4zm-2 2h20v2H2zm0 2h6v2H2zm14 0h6v2h-6zm-14 2h20v2H2zm4 2h12v2H6zm-2 2h4v2H4zm12 0h4v2h-4z"/></svg>',
     coin: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="%23ffd700"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 9h6" stroke="%23b8860b" stroke-width="2"/></svg>',
     fire_blue: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="%2300bfff"><path d="M12 2c0 0-6 4-6 10a6 6 0 0012 0c0-6-6-10-6-10z"/></svg>',
-    fire_green: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="%2300ff00"><path d="M12 2c0 0-6 4-6 10a6 6 0 0012 0c0-6-6-10-6-10z"/></svg>',
+    fire_green: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="%2300f0ff"><path d="M12 2c0 0-6 4-6 10a6 6 0 0012 0c0-6-6-10-6-10z"/></svg>',
     slime: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="%2332cd32"><path d="M12 4c-5 0-9 4-9 9 0 3 2 5 5 5h8c3 0 5-2 5-5 0-5-4-9-9-9z"/></svg>',
     bat: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="%23a855f7"><path d="M12 6l3 4h4l-3 4 1 5-5-3-5 3 1-5-3-4h4z"/></svg>',
     cube: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="%2300ffff"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>',
@@ -780,9 +1129,9 @@ window.selectWallpaper = function(wpName) {
         const btn = document.getElementById(`wp-btn-${k}`);
         if (btn) {
             if (k === wpName) {
-                btn.className = "px-3 py-2.5 rounded-lg border text-center transition-all font-mono text-xs font-bold cursor-pointer bg-[#00ff00]/10 border-[#00ff00]/30 text-[#00ff00]";
+                btn.className = "px-3 py-2.5 rounded-lg border text-center transition-all font-mono text-xs font-bold cursor-pointer bg-[#00f0ff]/10 border-[#00f0ff]/30 text-[#00f0ff]";
             } else {
-                btn.className = "px-3 py-2.5 rounded-lg border text-center transition-all font-mono text-xs font-bold cursor-pointer bg-black/40 border-white/10 text-gray-300 hover:text-[#00ff00] hover:border-[#00ff00]/30";
+                btn.className = "px-3 py-2.5 rounded-lg border text-center transition-all font-mono text-xs font-bold cursor-pointer bg-black/40 border-white/10 text-gray-300 hover:text-[#00f0ff] hover:border-[#00f0ff]/30";
             }
         }
     });
@@ -826,7 +1175,6 @@ function applyBackgroundStyle(type, customUrl = '') {
         welcome.style.backgroundImage = PRESET_WALLPAPERS.vaporwave;
         welcome.style.backgroundSize = 'cover';
         welcome.style.backgroundPosition = 'center';
-        welcome.style.backgroundAttachment = 'fixed';
     } else if (type === 'matrix') {
         welcome.style.backgroundColor = '#020202';
         welcome.style.backgroundImage = PRESET_WALLPAPERS.matrix;
@@ -835,7 +1183,6 @@ function applyBackgroundStyle(type, customUrl = '') {
         welcome.style.backgroundImage = `url('${customUrl}')`;
         welcome.style.backgroundSize = 'cover';
         welcome.style.backgroundPosition = 'center';
-        welcome.style.backgroundAttachment = 'fixed';
         welcome.style.backgroundRepeat = 'no-repeat';
     } else {
         welcome.style.backgroundImage = PRESET_WALLPAPERS.cosmic;
@@ -876,7 +1223,7 @@ window.handleWallpaperFileSelect = function(event) {
 
             if (dragText) {
                 dragText.innerText = "✅ Wallpaper Imported!";
-                dragText.className = "text-xs text-[#00ff00] font-mono font-bold";
+                dragText.className = "text-xs text-[#00f0ff] font-mono font-bold";
             }
 
             window.showMsg("🌌 Custom wallpaper imported successfully!");
@@ -989,7 +1336,7 @@ function updateCornerSprite(side, type, customUrl = '') {
     const badge = document.getElementById(`${side}-sprite-preview-badge`);
     if (badge) {
         badge.innerText = type === 'custom' ? 'Custom' : type.toUpperCase();
-        badge.className = 'text-[10px] text-[#00ff00] font-mono font-bold';
+        badge.className = 'text-[10px] text-[#00f0ff] font-mono font-bold';
     }
 }
 
@@ -1006,13 +1353,13 @@ function initWallpaperDragAndDrop() {
 
     ['dragenter', 'dragover'].forEach(eventName => {
         dragZone.addEventListener(eventName, () => {
-            dragZone.classList.add('border-[#00ff00]/60', 'bg-black/50');
+            dragZone.classList.add('border-[#00f0ff]/60', 'bg-black/50');
         }, false);
     });
 
     ['dragleave', 'drop'].forEach(eventName => {
         dragZone.addEventListener(eventName, () => {
-            dragZone.classList.remove('border-[#00ff00]/60', 'bg-black/50');
+            dragZone.classList.remove('border-[#00f0ff]/60', 'bg-black/50');
         }, false);
     });
 
@@ -1026,6 +1373,10 @@ function initWallpaperDragAndDrop() {
 }
 
 function initPortalSystem() {
+    // Restore Saved Language
+    const savedLang = localStorage.getItem('qtx_language') || 'en';
+    window.setLanguage(savedLang, false);
+
     // Restore Saved Theme
     const savedTheme = localStorage.getItem('qtx-theme') || 'dark';
     window.setTheme(savedTheme);
@@ -1062,13 +1413,18 @@ function initPortalSystem() {
     // Initialize statistics fields
     updateRosterStats();
 
+    // Restore Tab Lock States & UI
+    if (window.updateTabLockUI) {
+        window.updateTabLockUI();
+    }
+
     // Initialize real-time anonymous board
     initChatroom();
 }
 
 // --- REAL-TIME ANONYMOUS CHATROOM ---
 const AVATAR_PRESETS = {
-    'default': `<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full p-1.5 text-[#00ff00]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+    'default': `<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full p-1.5 text-[#00f0ff]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
     'cyber': `<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full p-1.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 10h.01M15 10h.01M9 15h6"/></svg>`,
     'gamer': `<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full p-1.5 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><circle cx="15" cy="13" r="1"/><circle cx="18" cy="11" r="1"/><rect width="20" height="12" x="2" y="6" rx="6"/></svg>`,
     'shield': `<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full p-1.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>`
@@ -1107,6 +1463,8 @@ let currentChatAttachmentType = null; // 'image', 'video' or 'file'
 let currentChatAttachmentName = null;
 let currentChatAttachmentSize = null;
 let chatRoomsList = { global: 0 };
+let lockedRoomsList = [];
+let roomExpirationsList = {};
 let chatPollInterval = null;
 let activeChatMessages = [];
 let currentChatSearchQuery = '';
@@ -1257,13 +1615,13 @@ function initChatroom() {
 
         ['dragenter', 'dragover'].forEach(eventName => {
             dragZone.addEventListener(eventName, () => {
-                dragZone.classList.add('border-[#00ff00]/60', 'bg-black/50');
+                dragZone.classList.add('border-[#00f0ff]/60', 'bg-black/50');
             }, false);
         });
 
         ['dragleave', 'drop'].forEach(eventName => {
             dragZone.addEventListener(eventName, () => {
-                dragZone.classList.remove('border-[#00ff00]/60', 'bg-black/50');
+                dragZone.classList.remove('border-[#00f0ff]/60', 'bg-black/50');
             }, false);
         });
 
@@ -1285,20 +1643,11 @@ function initChatroom() {
         }
     };
 
-    // Load initial list and messages
-    fetchChatRooms();
-    fetchChatMessages();
-
-    // Set up polling interval
-    if (chatPollInterval) clearInterval(chatPollInterval);
-    chatPollInterval = setInterval(() => {
-        // Only fetch if the chat view is visible (to minimize background network activity)
-        const chatView = document.getElementById('view-chat');
-        if (chatView && !chatView.classList.contains('hidden')) {
-            fetchChatMessages();
-            fetchChatRooms();
-        }
-    }, 3000);
+    // Stop polling since chat is currently closed
+    if (chatPollInterval) {
+        clearInterval(chatPollInterval);
+        chatPollInterval = null;
+    }
 }
 
 // Update Chat Identity UI across header, Discord-style sidebar, and settings previews
@@ -1405,7 +1754,7 @@ window.switchSettingsTab = function(tab) {
     
     if (tab === 'profile') {
         if (btnProfile) {
-            btnProfile.className = "w-full text-left px-3 py-2 rounded-lg bg-[#00ff00]/10 text-[#00ff00] font-bold text-xs transition-all cursor-pointer flex items-center gap-2 border border-[#00ff00]/15";
+            btnProfile.className = "w-full text-left px-3 py-2 rounded-lg bg-[#00f0ff]/10 text-[#00f0ff] font-bold text-xs transition-all cursor-pointer flex items-center gap-2 border border-[#00f0ff]/15";
         }
         if (btnProtection) {
             btnProtection.className = "w-full text-left px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-xs transition-all cursor-pointer flex items-center gap-2 border border-transparent";
@@ -1417,7 +1766,7 @@ window.switchSettingsTab = function(tab) {
             btnProfile.className = "w-full text-left px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-xs transition-all cursor-pointer flex items-center gap-2 border border-transparent";
         }
         if (btnProtection) {
-            btnProtection.className = "w-full text-left px-3 py-2 rounded-lg bg-[#00ff00]/10 text-[#00ff00] font-bold text-xs transition-all cursor-pointer flex items-center gap-2 border border-[#00ff00]/15";
+            btnProtection.className = "w-full text-left px-3 py-2 rounded-lg bg-[#00f0ff]/10 text-[#00f0ff] font-bold text-xs transition-all cursor-pointer flex items-center gap-2 border border-[#00f0ff]/15";
         }
         if (paneProfile) paneProfile.classList.add('hidden');
         if (paneProtection) paneProtection.classList.remove('hidden');
@@ -1640,7 +1989,7 @@ function showChatImagePreview(src, type = null) {
         if (type === 'video') dragText.innerText = "✅ Video Attached";
         else if (type === 'file') dragText.innerText = "✅ File Attached";
         else dragText.innerText = "✅ Image Attached";
-        dragText.classList.add('text-[#00ff00]');
+        dragText.classList.add('text-[#00f0ff]');
     }
 }
 
@@ -1688,7 +2037,7 @@ window.clearChatImageAttachment = function() {
     }
     if (dragText) {
         dragText.innerText = "📁 Select File or Media";
-        dragText.classList.remove('text-[#00ff00]');
+        dragText.classList.remove('text-[#00f0ff]');
     }
 };
 
@@ -1732,8 +2081,16 @@ async function fetchChatRooms() {
     try {
         const res = await fetch('/api/chat/rooms');
         if (!res.ok) return;
-        const rooms = await res.json();
-        chatRoomsList = rooms;
+        const data = await res.json();
+        if (data && typeof data === 'object' && data.counts) {
+            chatRoomsList = data.counts;
+            lockedRoomsList = data.lockedRooms || [];
+            roomExpirationsList = data.expirations || {};
+        } else {
+            chatRoomsList = data || {};
+            lockedRoomsList = [];
+            roomExpirationsList = {};
+        }
         renderChatRooms();
     } catch (err) {
         console.error("Failed to load chat rooms:", err);
@@ -1758,16 +2115,26 @@ function renderChatRooms() {
     sortedRooms.forEach(room => {
         const isActive = room === currentChatRoom;
         const count = chatRoomsList[room] || 0;
-        const icon = room === 'global' ? '🌍' : '🔒';
+        const isLocked = lockedRoomsList.includes(room);
+        const icon = room === 'global' ? '🌍' : (isLocked ? '🔒' : '💬');
         
+        let expTag = '';
+        if (roomExpirationsList[room] && roomExpirationsList[room].expiresAt) {
+            const msLeft = roomExpirationsList[room].expiresAt - Date.now();
+            if (msLeft > 0) {
+                const hoursLeft = Math.ceil(msLeft / (1000 * 60 * 60));
+                expTag = `<span class="text-[8px] font-mono text-cyan-300 bg-cyan-950/60 border border-cyan-500/30 px-1 py-0.5 rounded ml-1" title="Auto-deletes in ~${hoursLeft}h">⏳ ${hoursLeft}h</span>`;
+            }
+        }
+
         const btnClass = isActive 
-            ? "flex items-center justify-between w-full text-left px-3 py-2 rounded-lg bg-[#00ff00]/10 border border-[#00ff00]/20 text-[#00ff00] font-bold cursor-pointer transition-all"
+            ? "flex items-center justify-between w-full text-left px-3 py-2 rounded-lg bg-[#00f0ff]/10 border border-[#00f0ff]/20 text-[#00f0ff] font-bold cursor-pointer transition-all"
             : "flex items-center justify-between w-full text-left px-3 py-2 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 text-gray-400 hover:text-white cursor-pointer transition-all";
 
         html += `
             <button onclick="window.selectChatRoom('${room}')" class="${btnClass}">
-                <span class="truncate">${icon} ${room}</span>
-                <span class="text-[9px] ${isActive ? 'bg-[#00ff00]/20 text-white' : 'bg-white/10 text-gray-400'} px-1.5 py-0.5 rounded">${count}</span>
+                <span class="truncate flex items-center gap-1">${icon} <span>${room}</span>${expTag}</span>
+                <span class="text-[9px] ${isActive ? 'bg-[#00f0ff]/20 text-white' : 'bg-white/10 text-gray-400'} px-1.5 py-0.5 rounded shrink-0">${count}</span>
             </button>
         `;
     });
@@ -1776,48 +2143,152 @@ function renderChatRooms() {
 }
 
 // Switch Chat Room
-window.selectChatRoom = function(roomName) {
+window.selectChatRoom = function(roomName, customPassword) {
     if (!roomName) return;
-    currentChatRoom = roomName.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    currentChatRoom = roomName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_-]/g, '');
     if (!currentChatRoom) currentChatRoom = 'global';
     
+    if (customPassword) {
+        localStorage.setItem('qtx_room_pass_' + currentChatRoom, customPassword);
+    }
+
     const roomEl = document.getElementById('chat-current-room');
-    if (roomEl) roomEl.innerText = currentChatRoom;
+    if (roomEl) {
+        const isLocked = lockedRoomsList.includes(currentChatRoom);
+        let expText = '';
+        if (roomExpirationsList[currentChatRoom] && roomExpirationsList[currentChatRoom].expiresAt) {
+            const msLeft = roomExpirationsList[currentChatRoom].expiresAt - Date.now();
+            if (msLeft > 0) {
+                const hrsLeft = Math.ceil(msLeft / (1000 * 60 * 60));
+                expText = ` <span class="text-[10px] text-cyan-300 font-mono font-normal">⏳ (${hrsLeft}h left)</span>`;
+            }
+        }
+        roomEl.innerHTML = (isLocked ? '🔒 ' : '') + currentChatRoom + expText;
+    }
     
     renderChatRooms();
     fetchChatMessages(true); // force scroll to bottom
 };
 
 // Create or join a private room
-window.createOrJoinRoom = async function() {
-    const input = document.getElementById('new-room-name');
-    if (!input) return;
-    const roomVal = input.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+window.createOrJoinRoom = async function(customName, customPassword, customExpiration) {
+    const nameInput = document.getElementById('new-room-name');
+    let rawVal = customName || (nameInput ? nameInput.value : '');
+    if (!rawVal) return;
+
+    const roomVal = rawVal.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_-]/g, '');
     if (!roomVal) {
         window.showMsg("Enter a valid room name (letters/numbers/hyphens only)!");
         return;
     }
-    input.value = '';
+    if (nameInput) nameInput.value = '';
+
+    const pass = customPassword !== undefined ? customPassword : (localStorage.getItem('qtx_room_pass_' + roomVal) || '');
+    const expVal = customExpiration !== undefined ? customExpiration : 24;
 
     try {
         const response = await fetch('/api/chat/create-room', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ roomName: roomVal, username: chatNickname })
+            body: JSON.stringify({ roomName: roomVal, username: chatNickname, password: pass, expiresInHours: expVal })
         });
         const data = await response.json();
         if (response.ok) {
             window.showMsg(`✅ ${data.message || 'Room created!'}`);
-            window.selectChatRoom(roomVal);
+            if (pass) {
+                localStorage.setItem('qtx_room_pass_' + (data.room || roomVal), pass);
+            }
+            window.selectChatRoom(data.room || roomVal, pass);
             await fetchChatRooms();
+            window.closeCreateRoomModal();
         } else {
-            window.showMsg("❌ " + (data.error || "Failed to create room."));
+            window.showMsg("❌ " + (data.error || "Failed to create/join room."));
+            if (data.isLocked) {
+                window.openUnlockRoomModal(roomVal);
+            }
         }
     } catch (e) {
         console.error("Error creating room:", e);
         window.showMsg("Server error trying to create room.");
-        // Fallback to client-side switch
-        window.selectChatRoom(roomVal);
+        window.selectChatRoom(roomVal, pass);
+        window.closeCreateRoomModal();
+    }
+};
+
+window.openCreateRoomModal = function() {
+    const modal = document.getElementById('create-room-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        const nameInput = document.getElementById('modal-room-name');
+        const passInput = document.getElementById('modal-room-password');
+        const expSelect = document.getElementById('modal-room-expiration');
+        if (nameInput) nameInput.value = '';
+        if (passInput) passInput.value = '';
+        if (expSelect) expSelect.value = '24';
+        setTimeout(() => { if (nameInput) nameInput.focus(); }, 100);
+    }
+};
+
+window.closeCreateRoomModal = function() {
+    const modal = document.getElementById('create-room-modal');
+    if (modal) modal.classList.add('hidden');
+};
+
+window.createRoomFromModal = function() {
+    const nameInput = document.getElementById('modal-room-name');
+    const passInput = document.getElementById('modal-room-password');
+    const expSelect = document.getElementById('modal-room-expiration');
+    const nameVal = nameInput ? nameInput.value : '';
+    const passVal = passInput ? passInput.value : '';
+    const expVal = expSelect ? expSelect.value : '24';
+
+    if (nameVal) {
+        window.createOrJoinRoom(nameVal, passVal, expVal);
+    } else {
+        window.showMsg("Please enter a room name!");
+    }
+};
+
+window.selectPresetRoomTag = function(tag) {
+    const input = document.getElementById('modal-room-name');
+    if (input) {
+        input.value = tag;
+    }
+};
+
+window.openUnlockRoomModal = function(targetRoom) {
+    const target = targetRoom || currentChatRoom;
+    const modal = document.getElementById('unlock-room-modal');
+    const targetSpan = document.getElementById('unlock-room-target');
+    const passInput = document.getElementById('unlock-room-password');
+
+    if (targetSpan) targetSpan.innerText = '#' + target;
+    if (passInput) passInput.value = '';
+    if (modal) {
+        modal.dataset.room = target;
+        modal.classList.remove('hidden');
+        setTimeout(() => { if (passInput) passInput.focus(); }, 100);
+    }
+};
+
+window.closeUnlockRoomModal = function() {
+    const modal = document.getElementById('unlock-room-modal');
+    if (modal) modal.classList.add('hidden');
+};
+
+window.submitRoomUnlock = function() {
+    const modal = document.getElementById('unlock-room-modal');
+    const passInput = document.getElementById('unlock-room-password');
+    const targetRoom = modal ? modal.dataset.room || currentChatRoom : currentChatRoom;
+    const passVal = passInput ? passInput.value : '';
+
+    if (passVal) {
+        localStorage.setItem('qtx_room_pass_' + targetRoom, passVal);
+        window.closeUnlockRoomModal();
+        window.selectChatRoom(targetRoom, passVal);
+        window.showMsg("🔑 Passphrase saved for #" + targetRoom);
+    } else {
+        window.showMsg("Please enter the room passphrase!");
     }
 };
 
@@ -1825,9 +2296,24 @@ window.createOrJoinRoom = async function() {
 let lastMessageCount = 0;
 async function fetchChatMessages(forceScroll = false) {
     try {
-        const res = await fetch(`/api/chat/messages?room=${encodeURIComponent(currentChatRoom)}`);
+        const savedPass = localStorage.getItem('qtx_room_pass_' + currentChatRoom) || '';
+        const res = await fetch(`/api/chat/messages?room=${encodeURIComponent(currentChatRoom)}&password=${encodeURIComponent(savedPass)}`);
+        
+        if (res.status === 401) {
+            const errData = await res.json();
+            if (errData && errData.isLocked) {
+                renderLockedRoomOverlay(currentChatRoom);
+                return;
+            }
+        }
+        
         if (!res.ok) return;
         const data = await res.json();
+
+        if (data && data.isLocked) {
+            renderLockedRoomOverlay(currentChatRoom);
+            return;
+        }
         
         let messages = [];
         let pinned = [];
@@ -1847,12 +2333,32 @@ async function fetchChatMessages(forceScroll = false) {
     }
 }
 
+function renderLockedRoomOverlay(roomName) {
+    const container = document.getElementById('chat-messages-container');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="flex flex-col items-center justify-center h-full gap-4 text-center p-6 font-mono text-white">
+            <div class="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-3xl">
+                🔒
+            </div>
+            <div class="flex flex-col gap-1 max-w-sm">
+                <h3 class="text-sm font-bold text-amber-400 uppercase tracking-wider">Room #${roomName} is Locked</h3>
+                <p class="text-xs text-gray-400 font-sans">This private room is password protected. Enter the correct passphrase to read and post messages.</p>
+            </div>
+            <button onclick="window.openUnlockRoomModal('${roomName}')" class="bg-amber-400 hover:bg-amber-300 text-black font-bold px-5 py-2 rounded-xl text-xs cursor-pointer shadow-lg shadow-amber-500/20 transition-all flex items-center gap-2">
+                <span>🔑</span> ENTER PASSPHRASE
+            </button>
+        </div>
+    `;
+}
+
 // Format raw links into nice active styled clickable anchors safely
 function formatLinks(text) {
     const urlPattern = /(\b(https?:\/\/|www\.)[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
     return text.replace(urlPattern, (url) => {
         const href = url.toLowerCase().startsWith('http') ? url : `https://${url}`;
-        return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-cyan-400 underline hover:text-[#00ff00] transition-all font-mono break-all">${url}</a>`;
+        return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-cyan-400 underline hover:text-[#00f0ff] transition-all font-mono break-all">${url}</a>`;
     });
 }
 
@@ -1985,7 +2491,7 @@ function renderChatMessages(messages, forceScroll = false) {
         container.innerHTML = `
             <div class="flex flex-col items-center justify-center h-full text-gray-400 font-mono text-xs p-8 text-center gap-2">
                 <span>🔍 No messages match your search filter "${escapeHTML(currentChatSearchQuery)}".</span>
-                <button onclick="window.clearChatSearch()" class="text-[10px] text-[#00ff00] hover:underline bg-[#00ff00]/10 border border-[#00ff00]/20 px-2.5 py-1 rounded-lg mt-2 cursor-pointer">
+                <button onclick="window.clearChatSearch()" class="text-[10px] text-[#00f0ff] hover:underline bg-[#00f0ff]/10 border border-[#00f0ff]/20 px-2.5 py-1 rounded-lg mt-2 cursor-pointer">
                     Clear Search
                 </button>
             </div>
@@ -2003,7 +2509,7 @@ function renderChatMessages(messages, forceScroll = false) {
         const cleanBanner = escapeHTML(msg.banner || '');
         
         // Render PFP / Avatar (Clickable to show Discord profile)
-        const avatarHtml = `<div class="cursor-pointer hover:opacity-80 transition-all inline-block shrink-0" onclick="window.showDiscordProfile('${cleanUser}', '${cleanDisplayName}', '${cleanBio}', '${escapeHTML(msg.avatar || '')}', '${msg.color || '#00ff00'}', '${cleanBanner}')">${getAvatarHtml(msg.avatar, 'w-6 h-6')}</div>`;
+        const avatarHtml = `<div class="cursor-pointer hover:opacity-80 transition-all inline-block shrink-0" onclick="window.showDiscordProfile('${cleanUser}', '${cleanDisplayName}', '${cleanBio}', '${escapeHTML(msg.avatar || '')}', '${msg.color || '#00f0ff'}', '${cleanBanner}')">${getAvatarHtml(msg.avatar, 'w-6 h-6')}</div>`;
 
         // Render attached image
         let attachedImageHtml = '';
@@ -2025,7 +2531,7 @@ function renderChatMessages(messages, forceScroll = false) {
                 <div class="mt-3.5 rounded-xl overflow-hidden border border-white/5 bg-black/30 max-w-full md:max-w-md relative group">
                     <video src="${escapeHTML(msg.video)}" class="object-contain max-h-60 w-auto hover:opacity-95 transition-all" controls muted preload="metadata"></video>
                     <div class="absolute top-2 right-2 flex gap-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onclick="window.zoomChatImage('${escapeHTML(msg.video)}', 'video')" class="bg-black/80 hover:bg-[#00ff00]/20 hover:text-[#00ff00] text-white font-mono text-[9px] px-2 py-1 rounded border border-white/15 transition-all cursor-pointer">
+                        <button onclick="window.zoomChatImage('${escapeHTML(msg.video)}', 'video')" class="bg-black/80 hover:bg-[#00f0ff]/20 hover:text-[#00f0ff] text-white font-mono text-[9px] px-2 py-1 rounded border border-white/15 transition-all cursor-pointer">
                             🖥️ FULLSCREEN
                         </button>
                     </div>
@@ -2043,7 +2549,7 @@ function renderChatMessages(messages, forceScroll = false) {
                 sizeStr = kb > 1024 ? `(${(kb / 1024).toFixed(1)} MB)` : `(${kb} KB)`;
             }
             attachedFileHtml = `
-                <div class="mt-3 bg-black/40 hover:bg-black/60 border border-[#00ff00]/15 hover:border-[#00ff00]/30 rounded-xl p-3 max-w-full md:max-w-md flex items-center justify-between gap-3 font-mono transition-all">
+                <div class="mt-3 bg-black/40 hover:bg-black/60 border border-[#00f0ff]/15 hover:border-[#00f0ff]/30 rounded-xl p-3 max-w-full md:max-w-md flex items-center justify-between gap-3 font-mono transition-all">
                     <div class="flex items-center gap-2.5 min-w-0">
                         <span class="text-2xl shrink-0">📄</span>
                         <div class="flex flex-col min-w-0">
@@ -2051,7 +2557,7 @@ function renderChatMessages(messages, forceScroll = false) {
                             <span class="text-[10px] text-gray-500">${sizeStr || 'Unspecified size'}</span>
                         </div>
                     </div>
-                    <a href="${escapeHTML(msg.fileData)}" download="${cleanFileName}" class="shrink-0 text-[10px] font-bold text-[#00ff00] hover:text-[#00ff00]/80 bg-[#00ff00]/10 hover:bg-[#00ff00]/15 px-3 py-1.5 rounded-lg border border-[#00ff00]/25 hover:border-[#00ff00]/40 transition-all cursor-pointer flex items-center gap-1">
+                    <a href="${escapeHTML(msg.fileData)}" download="${cleanFileName}" class="shrink-0 text-[10px] font-bold text-[#00f0ff] hover:text-[#00f0ff]/80 bg-[#00f0ff]/10 hover:bg-[#00f0ff]/15 px-3 py-1.5 rounded-lg border border-[#00f0ff]/25 hover:border-[#00f0ff]/40 transition-all cursor-pointer flex items-center gap-1">
                         📥 DOWNLOAD
                     </a>
                 </div>
@@ -2086,8 +2592,8 @@ function renderChatMessages(messages, forceScroll = false) {
                     <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5 border-b border-white/[0.03] pb-1.5">
                         <div class="flex items-center gap-2">
                             <!-- Clickable display name and handle like Discord! -->
-                            <span class="font-bold font-sans text-xs text-white hover:underline cursor-pointer" style="color: ${msg.color || '#00ff00'}" onclick="window.showDiscordProfile('${cleanUser}', '${cleanDisplayName}', '${cleanBio}', '${escapeHTML(msg.avatar || '')}', '${msg.color || '#00ff00'}', '${cleanBanner}')">${cleanDisplayName}</span>
-                            <span class="text-[9px] font-mono text-gray-500 cursor-pointer hover:text-gray-400" onclick="window.showDiscordProfile('${cleanUser}', '${cleanDisplayName}', '${cleanBio}', '${escapeHTML(msg.avatar || '')}', '${msg.color || '#00ff00'}', '${cleanBanner}')">@${cleanUser}</span>
+                            <span class="font-bold font-sans text-xs text-white hover:underline cursor-pointer" style="color: ${msg.color || '#00f0ff'}" onclick="window.showDiscordProfile('${cleanUser}', '${cleanDisplayName}', '${cleanBio}', '${escapeHTML(msg.avatar || '')}', '${msg.color || '#00f0ff'}', '${cleanBanner}')">${cleanDisplayName}</span>
+                            <span class="text-[9px] font-mono text-gray-500 cursor-pointer hover:text-gray-400" onclick="window.showDiscordProfile('${cleanUser}', '${cleanDisplayName}', '${cleanBio}', '${escapeHTML(msg.avatar || '')}', '${msg.color || '#00f0ff'}', '${cleanBanner}')">@${cleanUser}</span>
                             <span class="text-[9px] text-gray-600 font-mono">No. ${postNum}</span>
                             ${deleteBtnHtml}
                             ${pinBtnHtml}
@@ -2156,11 +2662,13 @@ window.handleChatSubmit = async function(event) {
     input.value = '';
 
     try {
+        const roomPass = localStorage.getItem('qtx_room_pass_' + currentChatRoom) || '';
         const res = await fetch('/api/chat/messages', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 room: currentChatRoom,
+                password: roomPass,
                 username: chatNickname,
                 displayName: chatDisplayName,
                 bio: chatBio,
@@ -2197,8 +2705,10 @@ window.handleChatSubmit = async function(event) {
             // Restore text so they don't lose their typed message!
             input.value = backupText;
             
-            // If they get warned about NSFW, show a custom prominent popup with the warning
-            if (errData.warning) {
+            if (errData.isLocked || res.status === 401) {
+                window.openUnlockRoomModal(currentChatRoom);
+                window.showMsg("🔒 Passphrase required to post in #" + currentChatRoom);
+            } else if (errData.warning) {
                 window.showMsg(errData.warning);
             } else {
                 window.showMsg(errData.error || errData.message || "Failed to send message.");
@@ -2225,7 +2735,7 @@ window.showDiscordProfile = function(username, displayName, bio, avatarUrl, colo
         document.body.appendChild(modal);
     }
 
-    const accentColor = color || '#00ff00';
+    const accentColor = color || '#00f0ff';
     const avatarMarkup = getAvatarHtml(avatarUrl, 'w-20 h-20', 'rounded-xl border-2 border-solid');
 
     modal.innerHTML = `
@@ -2281,13 +2791,13 @@ window.showDiscordProfile = function(username, displayName, bio, avatarUrl, colo
                         </div>
                         <div class="flex items-center gap-2 bg-black/30 border border-white/5 rounded-lg px-2.5 py-1.5 text-xs text-gray-400">
                             <span class="text-sm">⚡</span>
-                            <span>Active in <span class="text-[#00ff00] font-bold">Retro Unblocked Sandbox</span></span>
+                            <span>Active in <span class="text-[#00f0ff] font-bold">Retro Unblocked Sandbox</span></span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Action Button -->
-                <button onclick="window.closeDiscordProfile()" class="w-full mt-4 bg-black/40 hover:bg-[#00ff00]/10 border border-solid text-xs font-bold py-2.5 px-4 rounded-lg transition-all focus:outline-none shadow-md cursor-pointer flex items-center justify-center gap-1.5" style="color: ${accentColor}; border-color: ${accentColor}40">
+                <button onclick="window.closeDiscordProfile()" class="w-full mt-4 bg-black/40 hover:bg-[#00f0ff]/10 border border-solid text-xs font-bold py-2.5 px-4 rounded-lg transition-all focus:outline-none shadow-md cursor-pointer flex items-center justify-center gap-1.5" style="color: ${accentColor}; border-color: ${accentColor}40">
                     <span>✕</span> CLOSE DATACARD
                 </button>
             </div>
@@ -2312,3 +2822,61 @@ window.closeDiscordProfile = function() {
         modal.classList.add('pointer-events-none');
     }
 };
+
+// News Voting (W / L) System
+window.initNewsVotes = function() {
+    const votes = JSON.parse(localStorage.getItem('qtx_news_votes') || '{"w": 1, "l": 0, "userVote": null}');
+    const wCountEl = document.getElementById('news-w-count');
+    const lCountEl = document.getElementById('news-l-count');
+    const wBtn = document.getElementById('news-w-btn');
+    const lBtn = document.getElementById('news-l-btn');
+
+    if (wCountEl) wCountEl.innerText = votes.w;
+    if (lCountEl) lCountEl.innerText = votes.l;
+
+    if (wBtn) {
+        if (votes.userVote === 'W') {
+            wBtn.classList.add('bg-emerald-500/30', 'ring-1', 'ring-emerald-400');
+        } else {
+            wBtn.classList.remove('bg-emerald-500/30', 'ring-1', 'ring-emerald-400');
+        }
+    }
+
+    if (lBtn) {
+        if (votes.userVote === 'L') {
+            lBtn.classList.add('bg-rose-500/30', 'ring-1', 'ring-rose-400');
+        } else {
+            lBtn.classList.remove('bg-rose-500/30', 'ring-1', 'ring-rose-400');
+        }
+    }
+};
+
+window.voteNews = function(type) {
+    const votes = JSON.parse(localStorage.getItem('qtx_news_votes') || '{"w": 1, "l": 0, "userVote": null}');
+    
+    if (votes.userVote === type) {
+        // Toggle off vote
+        if (type === 'W') votes.w = Math.max(0, votes.w - 1);
+        if (type === 'L') votes.l = Math.max(0, votes.l - 1);
+        votes.userVote = null;
+    } else {
+        // Remove previous vote if any
+        if (votes.userVote === 'W') votes.w = Math.max(0, votes.w - 1);
+        if (votes.userVote === 'L') votes.l = Math.max(0, votes.l - 1);
+
+        // Add new vote
+        if (type === 'W') votes.w += 1;
+        if (type === 'L') votes.l += 1;
+        votes.userVote = type;
+    }
+
+    localStorage.setItem('qtx_news_votes', JSON.stringify(votes));
+    window.initNewsVotes();
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    window.initNewsVotes();
+});
+setTimeout(() => {
+    window.initNewsVotes();
+}, 200);

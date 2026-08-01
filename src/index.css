@@ -49,10 +49,16 @@
   }
 }
 
-/* Prevent overscroll bounce on mobile */
+/* Prevent overscroll bounce on mobile & optimize rendering */
 html, body {
   overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
+}
+
+.game-card-optimized {
+  content-visibility: auto;
+  contain-intrinsic-size: 200px 320px;
 }
 
 @utility shimmer {
@@ -97,7 +103,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #00ff00;
+  background: #00f0ff;
 }
 
 /* Elite fallback override for native fullscreen styles across browsers */
@@ -134,7 +140,6 @@ body.light-theme {
 
 #welcome {
   background-image: radial-gradient(circle at top, #0e0e16, #050508, #010103);
-  background-attachment: fixed;
 }
 
 body.light-theme #welcome {
