@@ -32,6 +32,76 @@
 </head>
 
 <body class="bg-[#050508] text-gray-100 font-sans min-h-full overflow-y-auto no-scrollbar">
+    <!-- Press Any Key / Title Screen Landing Overlay -->
+    <div id="title-screen-overlay" class="fixed inset-0 z-[200] flex flex-col items-center justify-between bg-[#050508] text-white p-6 sm:p-10 select-none transition-all duration-700 opacity-100 overflow-hidden cursor-pointer">
+        <!-- Radial Glowing Grid Background -->
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,240,255,0.15)_0%,rgba(5,5,8,0.98)_75%)] pointer-events-none"></div>
+        <div class="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,rgba(0,0,0,0.8)_100%)] pointer-events-none"></div>
+        <div class="absolute inset-0 opacity-15 bg-[radial-gradient(#00f0ff_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none"></div>
+
+        <!-- Top Header Status Bar -->
+        <div class="relative z-10 w-full max-w-5xl flex items-center justify-between font-mono text-xs text-gray-400 border-b border-white/10 pb-4">
+            <div class="flex items-center gap-2.5">
+                <span class="w-2 h-2 rounded-full bg-[#00f0ff] animate-ping"></span>
+                <span class="text-white font-bold tracking-widest uppercase text-xs sm:text-sm">RE-VOLT LABS</span>
+            </div>
+            <div class="text-[10px] sm:text-xs text-gray-400 uppercase tracking-widest font-bold">
+                PRESS ANY KEY TO ENTER
+            </div>
+        </div>
+
+        <!-- Main Title Hero Section -->
+        <div class="relative z-10 flex flex-col items-center justify-center text-center my-auto gap-6 sm:gap-8 max-w-2xl px-4">
+            <!-- Icon with Glow -->
+            <div class="relative group">
+                <div class="absolute -inset-4 bg-[#00f0ff]/30 rounded-3xl blur-xl transition-all group-hover:bg-[#00f0ff]/50"></div>
+                <div class="relative w-20 h-20 sm:w-28 sm:h-28 rounded-3xl bg-[#0a0c14] border-2 border-[#00f0ff]/60 flex items-center justify-center p-4 sm:p-5 shadow-[0_0_50px_rgba(0,240,255,0.4)] animate-bounce">
+                    <svg viewBox="0 0 100 100" class="w-full h-full text-[#00f0ff]" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M36 70 L54 38 L66 38 L82 68 C72 73 52 73 36 70 Z"/>
+                        <rect x="56" y="41" width="8" height="5" rx="1" fill="#0a0a0f"/>
+                        <path d="M22 66 C20 40 38 25 50 25 C45 30 28 38 29 65 Z"/>
+                        <path d="M50 25 C42 12 33 14 34 16 C42 20 47 24 50 25 Z"/>
+                        <path d="M50 25 C58 12 68 15 67 17 C60 21 53 24 50 25 Z"/>
+                        <path d="M50 25 C68 20 74 29 72 31 C63 31 55 28 50 25 Z"/>
+                        <path d="M50 25 C64 30 73 38 71 40 C62 38 54 32 50 25 Z"/>
+                        <path d="M20 67 C35 63 60 63 82 67 C72 82 45 86 27 79 C22 75 20 67 20 67 Z" opacity="0.9"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Big Main Title Header -->
+            <div class="space-y-2">
+                <h1 class="text-4xl sm:text-6xl md:text-7xl font-black font-mono tracking-tight uppercase text-white drop-shadow-[0_0_35px_rgba(0,240,255,0.5)]">
+                    RE-<span class="text-[#00f0ff]">VOLT</span>
+                </h1>
+                <p class="text-gray-400 font-mono text-xs sm:text-sm tracking-widest uppercase">
+                    Unblocked Games & Social Portal
+                </p>
+            </div>
+
+            <!-- "PRESS ANY KEY" Prompt Box -->
+            <div class="mt-4 sm:mt-6 flex flex-col items-center gap-4">
+                <div class="px-8 sm:px-10 py-4 sm:py-5 rounded-2xl bg-gradient-to-r from-[#00f0ff]/20 via-cyan-500/25 to-blue-600/20 border-2 border-[#00f0ff] text-white font-mono text-sm sm:text-base font-black tracking-widest uppercase shadow-[0_0_35px_rgba(0,240,255,0.5)] animate-pulse flex items-center gap-3">
+                    <span class="text-[#00f0ff] text-lg">🎮</span>
+                    <span>PLEASE PRESS ANY KEY TO START</span>
+                </div>
+
+                <!-- Console-style Controller Prompt Graphic -->
+                <div class="flex items-center gap-2 font-mono text-[11px] text-gray-400 bg-black/60 border border-white/10 px-4 py-2 rounded-xl backdrop-blur-md">
+                    <span class="inline-flex items-center justify-center w-5 h-5 rounded bg-white/10 border border-white/20 text-[10px] font-bold text-[#00f0ff]">A</span>
+                    <span class="inline-flex items-center justify-center w-5 h-5 rounded bg-white/10 border border-white/20 text-[10px] font-bold text-[#00f0ff]">B</span>
+                    <span class="text-gray-500 font-bold">OR</span>
+                    <span class="text-gray-300">[ ANY KEY / TAP SCREEN ]</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Footer Info -->
+        <div class="relative z-10 w-full max-w-5xl flex items-center justify-between font-mono text-[10px] sm:text-xs text-gray-500 border-t border-white/10 pt-4">
+            <span>© 2026 RE-VOLT LABS</span>
+            <span>SYSTEM READY • PRESS ANY BUTTON</span>
+        </div>
+    </div>
     <!-- Sidebar Navigation Backdrop/Overlay -->
     <div id="sidebar-overlay" onclick="window.toggleSidebar(false)" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 hidden transition-opacity duration-300"></div>
 
@@ -71,21 +141,18 @@
                         <span class="text-base">🎮</span>
                         <span id="nav-lbl-games">GAMES</span>
                     </div>
-                    <span id="lock-badge-games" class="hidden text-amber-400 text-xs">🔒</span>
                 </button>
                 <button onclick="window.switchTab('news')" id="tab-news" class="tab-btn w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold transition-all text-gray-400 hover:text-white hover:bg-white/5 border border-transparent cursor-pointer text-left group">
                     <div class="flex items-center gap-3">
                         <span class="text-base">📰</span>
                         <span id="nav-lbl-news">NEWS</span>
                     </div>
-                    <span id="lock-badge-news" class="hidden text-amber-400 text-xs">🔒</span>
                 </button>
                 <button onclick="window.switchTab('settings')" id="tab-settings" class="tab-btn w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold transition-all text-gray-400 hover:text-white hover:bg-white/5 border border-transparent cursor-pointer text-left group">
                     <div class="flex items-center gap-3">
                         <span class="text-base">⚙️</span>
                         <span id="nav-lbl-settings">SETTINGS</span>
                     </div>
-                    <span id="lock-badge-settings" class="hidden text-amber-400 text-xs">🔒</span>
                 </button>
                 <button onclick="window.switchTab('chat')" id="tab-chat" class="tab-btn w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold transition-all text-red-400/80 hover:text-red-300 hover:bg-red-500/10 border border-transparent cursor-pointer text-left group">
                     <div class="flex items-center gap-3">
@@ -93,7 +160,6 @@
                         <span id="nav-lbl-chat" class="line-through text-gray-500">CHAT</span>
                     </div>
                     <div class="flex items-center gap-1">
-                        <span id="lock-badge-chat" class="hidden text-amber-400 text-xs">🔒</span>
                         <span class="bg-red-500/20 border border-red-500/40 text-red-400 text-[8px] px-1.5 py-0.5 rounded font-mono font-bold uppercase tracking-wider">CLOSED</span>
                         <span class="text-[9px] text-gray-400 font-mono font-normal">for now</span>
                     </div>
@@ -286,47 +352,6 @@
                                     </button>
                                     <button onclick="window.setLanguage('pt')" id="lang-btn-pt" class="px-3 py-2.5 rounded-xl border text-center transition-all font-mono text-xs font-bold cursor-pointer bg-black/40 border-white/10 text-gray-400 hover:text-white hover:border-white/20 flex items-center justify-center gap-1.5">
                                         <span>🇧🇷</span> Português
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Tab Lock Protection & PIN Security Card -->
-                        <div class="settings-card bg-[#0f0f15]/80 border border-white/5 rounded-xl p-6">
-                            <div class="flex flex-col gap-4">
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-3">
-                                    <div>
-                                        <h3 id="lbl-tablock-title" class="text-base font-bold text-amber-400 font-mono flex items-center gap-2">
-                                            🔒 Tab Lock & Security Protection
-                                        </h3>
-                                        <p id="lbl-tablock-desc" class="text-xs text-gray-400 font-sans mt-1">
-                                            Lock tabs (Chat, Games, Settings, News) behind a PIN code to prevent unauthorized access.
-                                        </p>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <input id="tab-pin-input" type="password" placeholder="PIN (Default: 1234)" class="bg-black/70 border border-amber-500/30 focus:border-amber-400 rounded-xl px-3 py-1.5 text-xs text-amber-300 font-mono w-32 outline-none">
-                                        <button onclick="window.saveTabPin()" class="bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 px-3 py-1.5 rounded-xl text-xs font-mono font-bold cursor-pointer transition-all">
-                                            SAVE PIN
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                    <button onclick="window.toggleTabLock('chat')" id="toggle-lock-chat" class="p-3 rounded-xl border font-mono text-xs font-bold transition-all cursor-pointer flex items-center justify-between bg-black/40 border-white/10 text-gray-300 hover:text-white">
-                                        <span class="flex items-center gap-1.5">💬 CHAT</span>
-                                        <span id="status-lock-chat" class="text-xs text-gray-500">🔓 Off</span>
-                                    </button>
-                                    <button onclick="window.toggleTabLock('games')" id="toggle-lock-games" class="p-3 rounded-xl border font-mono text-xs font-bold transition-all cursor-pointer flex items-center justify-between bg-black/40 border-white/10 text-gray-300 hover:text-white">
-                                        <span class="flex items-center gap-1.5">🎮 GAMES</span>
-                                        <span id="status-lock-games" class="text-xs text-gray-500">🔓 Off</span>
-                                    </button>
-                                    <button onclick="window.toggleTabLock('news')" id="toggle-lock-news" class="p-3 rounded-xl border font-mono text-xs font-bold transition-all cursor-pointer flex items-center justify-between bg-black/40 border-white/10 text-gray-300 hover:text-white">
-                                        <span class="flex items-center gap-1.5">📰 NEWS</span>
-                                        <span id="status-lock-news" class="text-xs text-gray-500">🔓 Off</span>
-                                    </button>
-                                    <button onclick="window.toggleTabLock('settings')" id="toggle-lock-settings" class="p-3 rounded-xl border font-mono text-xs font-bold transition-all cursor-pointer flex items-center justify-between bg-black/40 border-white/10 text-gray-300 hover:text-white">
-                                        <span class="flex items-center gap-1.5">⚙️ SETTINGS</span>
-                                        <span id="status-lock-settings" class="text-xs text-gray-500">🔓 Off</span>
                                     </button>
                                 </div>
                             </div>
@@ -1089,38 +1114,6 @@
                 <button onclick="window.closeUnlockRoomModal()" class="px-4 py-2 rounded-xl text-xs text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 cursor-pointer transition-all">Cancel</button>
                 <button onclick="window.submitRoomUnlock()" class="px-5 py-2 rounded-xl text-xs font-bold text-black bg-amber-400 hover:bg-amber-300 shadow-lg shadow-amber-500/20 cursor-pointer transition-all flex items-center gap-1.5">
                     <span>🔓</span> UNLOCK ROOM
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Unlock Protected Tab Modal -->
-    <div id="unlock-tab-modal" class="hidden fixed inset-0 z-[140] bg-black/85 backdrop-blur-md flex items-center justify-center p-4" onclick="window.closeUnlockTabModal()">
-        <div class="relative w-full max-w-sm bg-[#090a0f] border-2 border-amber-500/50 rounded-2xl p-6 flex flex-col gap-4 shadow-2xl font-mono text-white" onclick="event.stopPropagation()">
-            <div class="flex items-center justify-between border-b border-white/10 pb-3">
-                <div class="flex items-center gap-2">
-                    <span class="text-xl text-amber-400">🔒</span>
-                    <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider">Tab Access Security</h3>
-                </div>
-                <button onclick="window.closeUnlockTabModal()" class="text-gray-400 hover:text-white text-xs bg-white/5 hover:bg-white/10 px-2 py-1 rounded-lg border border-white/10 cursor-pointer transition-all">✕</button>
-            </div>
-
-            <p class="text-xs text-gray-300 font-sans leading-relaxed">
-                Tab <span id="unlock-tab-name" class="text-amber-400 font-mono font-bold uppercase">#tab</span> is locked with security protection. Enter your PIN code to access.
-            </p>
-
-            <div class="flex flex-col gap-1.5">
-                <label class="text-[10px] text-gray-400 font-mono uppercase">Security PIN / Passcode:</label>
-                <div class="relative">
-                    <span class="absolute left-3 top-2.5 text-gray-500 text-xs">🔑</span>
-                    <input id="unlock-tab-pin" type="password" placeholder="Enter PIN code (Default: 1234)..." class="bg-black/70 border border-amber-500/30 focus:border-amber-400 rounded-xl pl-8 pr-3 py-2 text-xs text-white placeholder-gray-600 outline-none w-full font-mono transition-all" onkeydown="if(event.key==='Enter') window.submitTabUnlock()">
-                </div>
-            </div>
-
-            <div class="flex items-center justify-end gap-3 pt-2 border-t border-white/10">
-                <button onclick="window.closeUnlockTabModal()" class="px-4 py-2 rounded-xl text-xs text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 cursor-pointer transition-all">Cancel</button>
-                <button onclick="window.submitTabUnlock()" class="px-5 py-2 rounded-xl text-xs font-bold text-black bg-amber-400 hover:bg-amber-300 shadow-lg shadow-amber-500/20 cursor-pointer transition-all flex items-center gap-1.5">
-                    <span>🔓</span> UNLOCK ACCESS
                 </button>
             </div>
         </div>

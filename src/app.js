@@ -708,28 +708,10 @@ window.toggleSidebar = function (forceState) {
     }
 };
 
-// --- NAVIGATION TAB SWITCHER LOGIC & TAB LOCK PROTECTION ---
-window.unlockedTabSessions = {};
-window.pendingTabToUnlock = null;
-
-window.switchTab = function (tabName, forceUnlock = false) {
+// --- NAVIGATION TAB SWITCHER LOGIC ---
+window.switchTab = function (tabName) {
     if (tabName === 'chat') {
         window.showMsg("ERROR: SUN");
-        return;
-    }
-
-    const lockedTabs = JSON.parse(localStorage.getItem('qtx_locked_tabs') || '{}');
-    if (!forceUnlock && lockedTabs[tabName] && !window.unlockedTabSessions[tabName]) {
-        window.pendingTabToUnlock = tabName;
-        const nameEl = document.getElementById('unlock-tab-name');
-        if (nameEl) nameEl.innerText = tabName;
-        const modal = document.getElementById('unlock-tab-modal');
-        if (modal) modal.classList.remove('hidden');
-        const pinInput = document.getElementById('unlock-tab-pin');
-        if (pinInput) {
-            pinInput.value = '';
-            setTimeout(() => pinInput.focus(), 100);
-        }
         return;
     }
 
@@ -769,80 +751,6 @@ window.switchTab = function (tabName, forceUnlock = false) {
     }
 
     window.showMsg(`Switched to ${tabName.toUpperCase()} view`);
-};
-
-window.toggleTabLock = function(tabName) {
-    const lockedTabs = JSON.parse(localStorage.getItem('qtx_locked_tabs') || '{}');
-    lockedTabs[tabName] = !lockedTabs[tabName];
-    localStorage.setItem('qtx_locked_tabs', JSON.stringify(lockedTabs));
-    window.updateTabLockUI();
-    window.showMsg(`${tabName.toUpperCase()} tab is now ${lockedTabs[tabName] ? 'LOCKED 🔒' : 'UNLOCKED 🔓'}`);
-};
-
-window.saveTabPin = function() {
-    const pinInput = document.getElementById('tab-pin-input');
-    const pin = pinInput ? pinInput.value.trim() : '';
-    if (!pin) {
-        window.showMsg("Please enter a non-empty PIN!");
-        return;
-    }
-    localStorage.setItem('qtx_tab_pin', pin);
-    if (pinInput) pinInput.value = '';
-    window.showMsg("Security PIN updated successfully! 🔒");
-};
-
-window.submitTabUnlock = function() {
-    const pinInput = document.getElementById('unlock-tab-pin');
-    const entered = pinInput ? pinInput.value.trim() : '';
-    const savedPin = localStorage.getItem('qtx_tab_pin') || '1234';
-
-    if (entered === savedPin) {
-        const targetTab = window.pendingTabToUnlock;
-        if (targetTab) {
-            window.unlockedTabSessions[targetTab] = true;
-            window.closeUnlockTabModal();
-            window.switchTab(targetTab, true);
-            window.showMsg(`Access Granted! Welcome to ${targetTab.toUpperCase()} 🔓`);
-        }
-    } else {
-        window.showMsg("❌ Incorrect PIN Code! (Default PIN: 1234)");
-    }
-};
-
-window.closeUnlockTabModal = function() {
-    const modal = document.getElementById('unlock-tab-modal');
-    if (modal) modal.classList.add('hidden');
-    window.pendingTabToUnlock = null;
-};
-
-window.updateTabLockUI = function() {
-    const lockedTabs = JSON.parse(localStorage.getItem('qtx_locked_tabs') || '{}');
-    const tabs = ['chat', 'games', 'news', 'settings'];
-
-    tabs.forEach(t => {
-        const isLocked = !!lockedTabs[t];
-        // Sidebar badge
-        const badge = document.getElementById(`lock-badge-${t}`);
-        if (badge) {
-            if (isLocked) badge.classList.remove('hidden');
-            else badge.classList.add('hidden');
-        }
-
-        // Settings toggle status button
-        const statusEl = document.getElementById(`status-lock-${t}`);
-        const btnEl = document.getElementById(`toggle-lock-${t}`);
-        if (statusEl) {
-            statusEl.innerText = isLocked ? '🔒 Locked' : '🔓 Off';
-            statusEl.className = isLocked ? 'text-xs text-amber-400 font-bold' : 'text-xs text-gray-500';
-        }
-        if (btnEl) {
-            if (isLocked) {
-                btnEl.className = "p-3 rounded-xl border font-mono text-xs font-bold transition-all cursor-pointer flex items-center justify-between bg-amber-500/10 border-amber-500/40 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.15)]";
-            } else {
-                btnEl.className = "p-3 rounded-xl border font-mono text-xs font-bold transition-all cursor-pointer flex items-center justify-between bg-black/40 border-white/10 text-gray-300 hover:text-white";
-            }
-        }
-    });
 };
 
 // --- LIGHT/DARK THEME SELECTOR LOGIC ---
@@ -1416,11 +1324,6 @@ function initPortalSystem() {
 
     // Initialize statistics fields
     updateRosterStats();
-
-    // Restore Tab Lock States & UI
-    if (window.updateTabLockUI) {
-        window.updateTabLockUI();
-    }
 
     // Initialize real-time anonymous board
     initChatroom();
@@ -2878,8 +2781,76 @@ window.voteNews = function(type) {
     window.initNewsVotes();
 };
 
+// Title Screen Landing Overlay Handler
+function initTitleScreen() {
+    const overlay = document.getElementById('title-screen-overlay');
+    if (!overlay) return;
+
+    let dismissed = false;
+
+    function playStartChime() {
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+
+            // Note 1: C5 (523.25 Hz)
+            const osc1 = ctx.createOscillator();
+            const gain1 = ctx.createGain();
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(523.25, ctx.currentTime);
+            gain1.gain.setValueAtTime(0.12, ctx.currentTime);
+            gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+            osc1.connect(gain1);
+            gain1.connect(ctx.destination);
+            osc1.start();
+            osc1.stop(ctx.currentTime + 0.35);
+
+            // Note 2: G5 (783.99 Hz) after 0.08s
+            setTimeout(() => {
+                const osc2 = ctx.createOscillator();
+                const gain2 = ctx.createGain();
+                osc2.type = 'triangle';
+                osc2.frequency.setValueAtTime(783.99, ctx.currentTime);
+                gain2.gain.setValueAtTime(0.18, ctx.currentTime);
+                gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
+                osc2.connect(gain2);
+                gain2.connect(ctx.destination);
+                osc2.start();
+                osc2.stop(ctx.currentTime + 0.55);
+            }, 80);
+        } catch (e) {
+            // Audio context not supported or muted
+        }
+    }
+
+    function dismissTitleScreen() {
+        if (dismissed) return;
+        dismissed = true;
+
+        playStartChime();
+
+        // Fade out overlay transition
+        overlay.classList.add('opacity-0', 'pointer-events-none');
+
+        // Cleanup event listeners
+        window.removeEventListener('keydown', dismissTitleScreen);
+        window.removeEventListener('click', dismissTitleScreen);
+        window.removeEventListener('touchstart', dismissTitleScreen);
+
+        setTimeout(() => {
+            overlay.style.display = 'none';
+        }, 700);
+    }
+
+    window.addEventListener('keydown', dismissTitleScreen);
+    window.addEventListener('click', dismissTitleScreen);
+    window.addEventListener('touchstart', dismissTitleScreen);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     window.initNewsVotes();
+    initTitleScreen();
 });
 setTimeout(() => {
     window.initNewsVotes();
