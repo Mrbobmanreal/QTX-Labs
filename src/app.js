@@ -1,4 +1,28 @@
 /* eslint-disable */
+window.handleImgError = function(img) {
+    if (!img || img.dataset.errorHandled) return;
+    img.dataset.errorHandled = "true";
+    img.style.display = 'none';
+    
+    const parent = img.parentElement;
+    if (parent) {
+        parent.classList.add('bg-black', 'relative');
+        
+        const oldOverlay = parent.querySelector('.img-error-403-overlay');
+        if (oldOverlay) oldOverlay.remove();
+
+        const errDiv = document.createElement('div');
+        errDiv.className = 'img-error-403-overlay absolute inset-0 bg-black flex flex-col items-center justify-center p-2 text-center font-mono select-none border border-white/10 z-0 overflow-hidden';
+        errDiv.innerHTML = `
+            <div class="flex items-center justify-center gap-1.5 text-white font-black text-xs sm:text-sm tracking-widest uppercase">
+                <svg class="w-3.5 h-3.5 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <span>ERROR 403</span>
+            </div>
+        `;
+        parent.appendChild(errDiv);
+    }
+};
+
 let gamesData = [];
 let currentCategory = 'All';
 let currentPage = 1;
@@ -163,7 +187,7 @@ function renderRecentlyPlayed() {
             <div class="group relative overflow-hidden rounded-xl border border-white/10 bg-[#0f0f15]/90 p-3.5 flex flex-col justify-between hover:border-[#00f0ff]/50 hover:bg-[#14141c] hover:shadow-[0_0_20px_rgba(0,255,0,0.08)] transition-all duration-300">
                 <div class="flex gap-3 items-center">
                     <div class="w-16 h-12 rounded-lg bg-black overflow-hidden shrink-0 border border-white/10 relative">
-                        <img src="${thumbnail}" alt="${game.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" referrerPolicy="no-referrer">
+                        <img src="${thumbnail}" alt="${game.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" referrerPolicy="no-referrer" onerror="window.handleImgError(this)">
                     </div>
                     <div class="min-w-0 flex-1">
                         <div class="flex items-center justify-between gap-1 mb-0.5">
@@ -507,7 +531,7 @@ function renderGames() {
             <div>
                 <!-- Image container -->
                 <div class="relative w-full aspect-video overflow-hidden border-b border-white/5 bg-black">
-                    <img src="${thumbnail}" alt="${game.title}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" referrerPolicy="no-referrer">
+                    <img src="${thumbnail}" alt="${game.title}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" referrerPolicy="no-referrer" onerror="window.handleImgError(this)">
                     ${badgeHtml}
                     <button onclick="window.toggleFavorite('${game.id}', event)" class="absolute top-3 right-3 flex items-center justify-center w-8 h-8 rounded-full bg-black/60 hover:bg-black/85 border border-white/10 text-gray-400 hover:text-red-500 transition-all cursor-pointer z-10" title="Toggle Favorite">
                         ${isFavorited(game.id) 
@@ -627,18 +651,11 @@ window.playWebGame = function (iframeUrl, title) {
             .replace('/blob/', '/');
     }
 
-    // Check if URL is a CDN raw HTML or GitHub file
-    const isCdnHtml = (targetIframeUrl.startsWith('http://') || targetIframeUrl.startsWith('https://')) && 
-                      (targetIframeUrl.includes('jsdelivr.net') || 
-                       targetIframeUrl.includes('githubusercontent.com') || 
-                       targetIframeUrl.includes('github.io') ||
-                       targetIframeUrl.includes('github.com') ||
-                       targetIframeUrl.includes('rawcdn.githack.com')) &&
-                      (targetIframeUrl.includes('.html') || targetIframeUrl.includes('.htm') || targetIframeUrl.endsWith('/') || !targetIframeUrl.split('?')[0].includes('.'));
-
+    // Any external HTTP or HTTPS URL should be proxied through /api/raw-proxy to guarantee HTML rendering and avoid text/plain code display
+    const isExternalWeb = (targetIframeUrl.startsWith('http://') || targetIframeUrl.startsWith('https://'));
     const isStaticDeployment = window.location.hostname.endsWith('github.io') || window.location.protocol === 'file:';
 
-    if (isCdnHtml && !isStaticDeployment) {
+    if (isExternalWeb && !isStaticDeployment) {
         iframe._lastFetchedUrl = targetIframeUrl;
         iframe.src = `/api/raw-proxy?url=${encodeURIComponent(targetIframeUrl)}`;
         iframe.onload = function() {
@@ -679,14 +696,25 @@ window.reloadWebGame = function () {
 };
 
 window.toggleWebGameFullscreen = function () {
+    const container = $id('game-player-container');
     const iframe = $id('game-iframe');
-    if (!iframe) return;
-    if (iframe.requestFullscreen) {
-        iframe.requestFullscreen();
-    } else if (iframe.webkitRequestFullscreen) {
-        iframe.webkitRequestFullscreen();
-    } else if (iframe.msRequestFullscreen) {
-        iframe.msRequestFullscreen();
+    const elem = container || iframe;
+    if (!elem) return;
+
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) {
+            elem.msRequestFullscreen();
+        }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        }
     }
 };
 
@@ -2312,7 +2340,7 @@ function renderPinnedMessages(pinned) {
         if (msg.image) {
             attachmentThumb = `
                 <div class="mt-1.5 max-w-[80px] rounded overflow-hidden border border-white/5 cursor-zoom-in" onclick="window.zoomChatImage('${escapeHTML(msg.image)}')">
-                    <img src="${msg.image}" class="object-cover h-10 w-10 hover:opacity-90" alt="Pinned Image">
+                    <img src="${msg.image}" class="object-cover h-10 w-10 hover:opacity-90" alt="Pinned Image" onerror="window.handleImgError(this)">
                 </div>
             `;
         } else if (msg.video) {
@@ -2423,7 +2451,7 @@ function renderChatMessages(messages, forceScroll = false) {
         if (msg.image) {
             attachedImageHtml = `
                 <div class="mt-3.5 rounded-xl overflow-hidden border border-white/5 bg-black/30 max-w-full md:max-w-md cursor-zoom-in group relative" onclick="window.zoomChatImage('${escapeHTML(msg.image)}')">
-                    <img src="${msg.image}" class="object-contain max-h-60 w-auto hover:opacity-95 transition-all" alt="Attached Chat Image">
+                    <img src="${msg.image}" class="object-contain max-h-60 w-auto hover:opacity-95 transition-all" alt="Attached Chat Image" onerror="window.handleImgError(this)">
                     <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <span class="bg-black/80 text-white font-mono text-[10px] px-2.5 py-1 rounded border border-white/15">🔍 VIEW FULL SIZE</span>
                     </div>
@@ -2655,9 +2683,6 @@ window.showDiscordProfile = function(username, displayName, bio, avatarUrl, colo
                 <div class="absolute inset-0" style="background-image: linear-gradient(rgba(0, 255, 0, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 255, 0, 0.05) 1px, transparent 1px); background-size: 8px 8px;"></div>
                 ` : ''}
                 
-                <div class="absolute top-3 right-3 flex gap-2">
-                    <span class="px-2 py-0.5 rounded bg-black/60 border border-solid text-[8px] uppercase tracking-wider font-bold select-none" style="color: ${accentColor}; border-color: ${accentColor}40">ONLINE PROT</span>
-                </div>
                 <div class="absolute bottom-2 right-3">
                     <span class="text-[9px] text-gray-500 font-mono tracking-widest bg-black/60 px-1.5 py-0.5 rounded">NET_ID: 108.9</span>
                 </div>

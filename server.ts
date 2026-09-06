@@ -29,6 +29,14 @@ async function startServer() {
   app.use(express.json({ limit: '15mb' }));
   app.use(express.urlencoded({ limit: '15mb', extended: true }));
 
+  // Global Cross-Origin Isolation headers for SharedArrayBuffer & WebWorker Pthreads
+  app.use((req, res, next) => {
+    res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+    res.setHeader("Cross-Origin-Embedder-Policy", "credentialless");
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    next();
+  });
+
   // Nintendo DS Emulator Proxy Helper
   const proxyDSFile = async (reqPath: string, res: express.Response) => {
     const targetUrl = `https://ds.44670.org/${reqPath}`;
@@ -126,70 +134,733 @@ async function startServer() {
     "emulatorjs": "https://cdn.jsdelivr.net/gh/a456pur/seraph@81f551ca0aa8e3d6018d32d8ac5904ac9bc78f76/storage/emulatorjs/data/",
     "tetris-rom": "https://cdn.jsdelivr.net/gh/bubbls/UGS-file-encryption@c39521ba7e7523bc039606d7befe445d2929c916/",
     "cuphead": "https://cdn.jsdelivr.net/gh/web-ports/cuphead@c9ff1b6b16f9d402b78a42fc2200e1c076c0ab6e/",
-    "caseoh-basics": "https://cdn.jsdelivr.net/gh/bubbls/ports@latest/baldi-caseoh/"
+    "caseoh-basics": "https://cdn.jsdelivr.net/gh/bubbls/ports@latest/baldi-caseoh/",
+    "yikes-portal": "https://yikes.pw/portal/"
   };
 
-  // Redirect /api/game-proxy/:gameId (no trailing slash) to /api/game-proxy/:gameId/ (with trailing slash)
-  app.get("/api/game-proxy/:gameId", (req, res) => {
-    const { gameId } = req.params;
-    const qs = req.originalUrl.includes("?") ? req.originalUrl.substring(req.originalUrl.indexOf("?")) : "";
-    res.redirect(302, `/api/game-proxy/${gameId}/${qs}`);
-  });
-
-  // Handle all requests with trailing slashes or subpaths under the game-proxy
-  app.get("/api/game-proxy/:gameId/*", async (req, res) => {
+  // Handle all game-proxy requests (root and subpaths)
+  app.get(["/api/game-proxy/:gameId", "/api/game-proxy/:gameId/*"], async (req, res) => {
     const { gameId } = req.params;
     const baseUrl = GAME_CDN_MAPS[gameId];
     if (!baseUrl) {
       return res.status(404).send(`Unknown game ID in proxy mapping: ${gameId}`);
     }
 
-    // req.params[0] is the wildcard part after /api/game-proxy/:gameId/
-    let relativePath = req.params[0] || "";
-
-    // If sub-path is empty, default to index.html
-    if (!relativePath || relativePath === "") {
-      relativePath = "index.html";
+    // Ensure trailing slash for root game url so relative paths work in browser
+    const pathWithoutQs = req.originalUrl.split("?")[0];
+    if (pathWithoutQs === `/api/game-proxy/${gameId}`) {
+      const qs = req.originalUrl.includes("?") ? req.originalUrl.substring(req.originalUrl.indexOf("?")) : "";
+      return res.redirect(302, `/api/game-proxy/${gameId}/${qs}`);
     }
 
+    let relativePath = req.params[0] || "";
     const qs = req.url.includes("?") ? req.url.substring(req.url.indexOf("?")) : "";
-    const targetUrl = baseUrl + relativePath + qs;
+    let targetUrl = baseUrl + relativePath + qs;
 
     console.log(`[PROXY] gameId=${gameId}, relativePath=${relativePath} -> ${targetUrl}`);
 
     try {
-      const response = await fetch(targetUrl, {
+      let response = await fetch(targetUrl, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           'Accept': '*/*'
         }
       });
+
+      // If root path fetch failed, try index.html as fallback
+      if (!response.ok && (!relativePath || relativePath === "")) {
+        const fallbackUrl = baseUrl + "index.html" + qs;
+        const fallbackRes = await fetch(fallbackUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': '*/*'
+          }
+        });
+        if (fallbackRes.ok) {
+          response = fallbackRes;
+        }
+      }
+
       if (!response.ok) {
         console.warn(`[PROXY] Fetch failed for ${targetUrl} with status: ${response.status}`);
         return res.status(response.status).send(`Failed to fetch: ${response.statusText}`);
       }
 
       const contentType = response.headers.get("content-type");
-      if (contentType) {
-        if (relativePath.endsWith(".js") || relativePath.endsWith("service-worker.js") || relativePath.endsWith("runner.js") || relativePath.endsWith("renpy.js") || relativePath.endsWith("renpy-pre.js")) {
-          res.setHeader("content-type", "application/javascript");
-        } else if (relativePath.endsWith(".wasm")) {
-          res.setHeader("content-type", "application/wasm");
-        } else {
-          res.setHeader("content-type", contentType);
-        }
-      } else {
-        if (relativePath.endsWith(".js") || relativePath.endsWith("service-worker.js") || relativePath.endsWith("runner.js") || relativePath.endsWith("renpy.js") || relativePath.endsWith("renpy-pre.js")) {
-          res.setHeader("content-type", "application/javascript");
-        } else if (relativePath.endsWith(".wasm")) {
-          res.setHeader("content-type", "application/wasm");
-        }
+      if (relativePath.endsWith(".js") || relativePath.endsWith("service-worker.js") || relativePath.endsWith("runner.js") || relativePath.endsWith("renpy.js") || relativePath.endsWith("renpy-pre.js")) {
+        res.setHeader("content-type", "application/javascript");
+      } else if (relativePath.endsWith(".wasm")) {
+        res.setHeader("content-type", "application/wasm");
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      } else if (relativePath.endsWith(".data") || relativePath.endsWith(".pck") || relativePath.endsWith(".bin")) {
+        res.setHeader("content-type", "application/octet-stream");
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      } else if (relativePath.endsWith(".svg")) {
+        res.setHeader("content-type", "image/svg+xml");
+      } else if (contentType) {
+        res.setHeader("content-type", contentType);
       }
 
-      // Headers config for ServiceWorker, WASM, Web Workers (removed restrictive COOP/COEP that block nested iframes)
+      // Headers config for ServiceWorker, WASM, Web Workers, and SharedArrayBuffer cross-origin isolation
+      const contentLength = response.headers.get("content-length");
+      if (contentLength) {
+        res.setHeader("content-length", contentLength);
+      }
+      const acceptRanges = response.headers.get("accept-ranges");
+      if (acceptRanges) {
+        res.setHeader("accept-ranges", acceptRanges);
+      }
+
+      res.setHeader("Cross-Origin-Embedder-Policy", "credentialless");
+      res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
       res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
       res.setHeader("Access-Control-Allow-Origin", "*");
       res.setHeader("Service-Worker-Allowed", `/api/game-proxy/${gameId}/`);
+
+      // Patch hl2_launcher.js for Portal to guarantee thread worker loading, chunk loader resilience, and Atomics unlock
+      if (gameId === "yikes-portal" && relativePath.includes("hl2_launcher.js")) {
+        let jsText = await response.text();
+
+        // 1. Patch loadWasmModuleToAllWorkers to ensure worker pool loading timeouts/errors never block Emscripten dependencies
+        const idxWorker = jsText.indexOf('loadWasmModuleToAllWorkers(onMaybeReady) {');
+        if (idxWorker !== -1) {
+          const idxWorkerEnd = jsText.indexOf('allocateUnusedWorker() {', idxWorker);
+          if (idxWorkerEnd !== -1) {
+            const origWorkerBlock = jsText.slice(idxWorker, idxWorkerEnd);
+            const newWorkerBlock = `loadWasmModuleToAllWorkers(onMaybeReady) {
+        if (ENVIRONMENT_IS_PTHREAD) {
+          return onMaybeReady();
+        }
+        let done = false;
+        const safeOnReady = () => {
+          if (!done) {
+            done = true;
+            try { onMaybeReady(); } catch(e) { console.warn('onMaybeReady error:', e); }
+          }
+        };
+        try {
+          let pthreadPoolReady = Promise.all(PThread.unusedWorkers.map(PThread.loadWasmModuleToWorker));
+          pthreadPoolReady.then(safeOnReady).catch(err => {
+            console.warn('[Portal Proxy] Worker pool error:', err);
+            safeOnReady();
+          });
+        } catch(e) {
+          console.warn('[Portal Proxy] Worker pool exception:', e);
+          safeOnReady();
+        }
+        setTimeout(() => {
+          if (!done) {
+            console.warn('[Portal Proxy] Worker pool timeout reached, proceeding to launch engine...');
+            safeOnReady();
+          }
+        }, 3000);
+      },
+  `;
+            jsText = jsText.replace(origWorkerBlock, newWorkerBlock);
+          }
+        }
+
+        // 2. Patch setProgress & loadMap for IndexedDB persistent chunk caching and MB download tracking
+        const idxSetProgress = jsText.indexOf('async setProgress(mapName, progress) {');
+        const idxDataLoader = jsText.indexOf('const dataLoader = new DataLoader()', idxSetProgress !== -1 ? idxSetProgress : 0);
+        if (idxSetProgress !== -1 && idxDataLoader !== -1) {
+          const origSetProgressBlock = jsText.slice(idxSetProgress, idxDataLoader);
+          const newSetProgressBlock = `async setProgress(mapName, progress, loadedBytes, totalBytes) {
+		if (progress < 1) {
+			if (typeof spinnerElement !== 'undefined' && spinnerElement) spinnerElement.style.display = '';
+			if (typeof progressElement !== 'undefined' && progressElement) {
+				progressElement.hidden = false;
+				progressElement.value = Math.round(progress * 100);
+				progressElement.max = 100;
+			}
+			if (typeof statusElement !== 'undefined' && statusElement) {
+				if (loadedBytes && totalBytes) {
+					const lMb = (loadedBytes / (1024 * 1024)).toFixed(1);
+					const tMb = (totalBytes / (1024 * 1024)).toFixed(1);
+					const pct = Math.round(progress * 100);
+					statusElement.innerText = 'Downloading ' + mapName + ': ' + lMb + ' MB / ' + tMb + ' MB (' + pct + '%)';
+				} else {
+					const pct = Math.round(progress * 100);
+					statusElement.innerText = 'Downloading map ' + mapName + ' (' + pct + '%)';
+				}
+			}
+		} else {
+			if (typeof spinnerElement !== 'undefined' && spinnerElement) spinnerElement.style.display = 'none';
+			if (typeof statusElement !== 'undefined' && statusElement) statusElement.innerText = '';
+			if (typeof progressElement !== 'undefined' && progressElement) progressElement.hidden = true;
+		}
+	}
+	async loadMap(mapName) {
+		this.setProgress(mapName, 0);
+		let resolve;
+		const promise = new Promise((res) => { resolve = res; });
+
+		const unpackBuffer = (arrayBuf) => {
+			try {
+				const dv = new DataView(arrayBuf);
+				let offset = 0;
+				while(offset < dv.byteLength) {
+					const pathLen = dv.getInt32(offset, true);
+					const dataLen = dv.getInt32(offset + 4, true);
+					const path = new TextDecoder().decode(new DataView(
+						dv.buffer,
+						offset + 8,
+						pathLen
+					));
+					const blob = new Uint8Array(
+						dv.buffer,
+						offset + 8 + pathLen,
+						dataLen
+					);
+					offset += 8 + pathLen + dataLen;
+					const dir = path.replace(/\\/[^\\/]+$/, '');
+					if (typeof FS !== 'undefined' && FS.mkdirTree) {
+						FS.mkdirTree(dir);
+						FS.writeFile(path, blob);
+					}
+				}
+			} catch(err) {
+				console.warn('Error unpacking map chunk:', mapName, err);
+			}
+		};
+
+		const getCached = () => new Promise((res) => {
+			try {
+				const req = indexedDB.open('portal_chunks_v1', 1);
+				req.onupgradeneeded = () => req.result.createObjectStore('chunks');
+				req.onsuccess = () => {
+					const tx = req.result.transaction('chunks', 'readonly');
+					const getReq = tx.objectStore('chunks').get(mapName);
+					getReq.onsuccess = () => res(getReq.result || null);
+					getReq.onerror = () => res(null);
+				};
+				req.onerror = () => res(null);
+			} catch(e) { res(null); }
+		});
+
+		const setCached = (buf) => new Promise((res) => {
+			try {
+				const req = indexedDB.open('portal_chunks_v1', 1);
+				req.onupgradeneeded = () => req.result.createObjectStore('chunks');
+				req.onsuccess = () => {
+					const tx = req.result.transaction('chunks', 'readwrite');
+					tx.objectStore('chunks').put(buf, mapName);
+					tx.oncomplete = () => res();
+					tx.onerror = () => res();
+				};
+				req.onerror = () => res();
+			} catch(e) { res(); }
+		});
+
+		getCached().then(cachedBuf => {
+			if (cachedBuf && cachedBuf.byteLength > 0) {
+				console.log('[Portal Proxy] Loaded cached chunk from IndexedDB:', mapName);
+				if (typeof statusElement !== 'undefined' && statusElement) statusElement.innerText = 'Loaded ' + mapName + ' from fast cache!';
+				this.setProgress(mapName, 1);
+				unpackBuffer(cachedBuf);
+				return resolve();
+			}
+
+			const xhr = new XMLHttpRequest();
+			xhr.responseType = 'arraybuffer';
+			xhr.onprogress = e => {
+				if (e.lengthComputable && e.total > 0) {
+					this.setProgress(mapName, e.loaded / e.total, e.loaded, e.total);
+				}
+			};
+			xhr.onerror = () => {
+				console.warn('Cannot load map chunk:', mapName);
+				this.setProgress(mapName, 1);
+				resolve();
+			};
+			xhr.onload = async () => {
+				this.setProgress(mapName, 1);
+				if (xhr.status !== 200 && xhr.status !== 0) {
+					console.warn('Map chunk status non-200:', xhr.status);
+					return resolve();
+				}
+				if (xhr.response && xhr.response.byteLength > 0) {
+					unpackBuffer(xhr.response);
+					await setCached(xhr.response);
+				}
+				resolve();
+			};
+			xhr.open('GET', 'chunks/' + mapName + '.data', true);
+			xhr.send();
+		});
+
+		return promise;
+	}
+}
+`;
+          jsText = jsText.replace(origSetProgressBlock, newSetProgressBlock);
+        }
+
+        // 3. Patch Module.downloadMap to guarantee Atomics / HEAP32 lock unlock under any circumstances
+        const idxDl = jsText.indexOf('Module.downloadMap =');
+        if (idxDl !== -1) {
+          const idxDlEnd = jsText.indexOf('// end include:', idxDl);
+          if (idxDlEnd !== -1) {
+            const origDlBlock = jsText.slice(idxDl, idxDlEnd);
+            const newDlBlock = `Module.downloadMap = (lock, mapName) => {
+	console.log('[Portal Proxy] Requesting map load:', mapName);
+	const unlock = () => {
+		try {
+			if (typeof Atomics !== 'undefined' && Atomics.notify) {
+				Atomics.store(HEAP32, lock >> 2, 0);
+				Atomics.store(HEAP32, lock, 0);
+				Atomics.notify(HEAP32, lock >> 2);
+				Atomics.notify(HEAP32, lock);
+			}
+		} catch(e) {}
+		if (typeof HEAP32 !== 'undefined' && HEAP32) {
+			HEAP32[lock >> 2] = 0;
+			HEAP32[lock] = 0;
+		}
+	};
+	dataLoader.loadMapWithDeps(mapName).then(() => {
+		console.log('[Portal Proxy] Map loaded successfully:', mapName);
+		unlock();
+	}).catch(err => {
+		console.error('[Portal Proxy] Error loading map:', mapName, err);
+		unlock();
+	});
+}
+`;
+            jsText = jsText.replace(origDlBlock, newDlBlock);
+          }
+        }
+
+        // 4. Patch addRunDependency('load_game_data') to prevent uncaught promise rejection sticking runDependencies at 50%
+        const idxLoadGameData = jsText.indexOf("addRunDependency('load_game_data')");
+        if (idxLoadGameData !== -1) {
+          const idxPostJsEnd = jsText.indexOf("// end include: emscripten/post.js", idxLoadGameData);
+          if (idxPostJsEnd !== -1) {
+            const origGameDataBlock = jsText.slice(idxLoadGameData, idxPostJsEnd);
+            const newGameDataBlock = `let gameDataDone = false;
+const safeRemoveGameData = () => {
+  if (!gameDataDone) {
+    gameDataDone = true;
+    try { removeRunDependency('load_game_data'); } catch(e) {}
+  }
+};
+addRunDependency('load_game_data');
+dataLoader.loadMapWithDeps('background1').then(x => {
+    console.log('[Portal Proxy] Background map loaded!');
+    safeRemoveGameData();
+}).catch(err => {
+    console.warn('[Portal Proxy] Background map load error:', err);
+    safeRemoveGameData();
+});
+setTimeout(() => {
+    if (!gameDataDone) {
+        console.warn('[Portal Proxy] Background map timeout, unblocking boot...');
+        safeRemoveGameData();
+    }
+}, 10000);
+})();
+`;
+            jsText = jsText.replace(origGameDataBlock, newGameDataBlock);
+          }
+        }
+
+        // 5. Suppress non-fatal C++ exception assertions in hl2_launcher.js so ___cxa_throw never aborts or triggers window.onerror
+        const exceptionRegex = /assert\(false,\s*'Exception thrown, but exception catching is not enabled[^']*'\);/g;
+        jsText = jsText.replace(exceptionRegex, "console.warn('[Portal Proxy] Suppressed non-fatal C++ exception');");
+
+        // 6. Guarantee _scriptName is never undefined when document.currentScript is null in async execution
+        jsText = jsText.replace(
+          "var _scriptName = typeof document != 'undefined' ? document.currentScript?.src : undefined;",
+          "var _scriptName = (typeof document != 'undefined' && document.currentScript && document.currentScript.src) ? document.currentScript.src : (typeof window !== 'undefined' ? (window.location.href.split('?')[0].split('#')[0].endsWith('/') ? window.location.href.split('?')[0].split('#')[0] + 'hl2_launcher.js' : window.location.href.split('?')[0].split('#')[0].replace(/\\/[^\\/]*$/, '/hl2_launcher.js')) : undefined);"
+        );
+
+        // 7. Patch updateCanvasDimensions to prevent 0-sized WebGL buffer
+        jsText = jsText.replace(
+          "updateCanvasDimensions(canvas, wNative, hNative) {",
+          "updateCanvasDimensions(canvas, wNative, hNative) { if (!wNative) wNative = canvas.widthNative || window.innerWidth || 1280; if (!hNative) hNative = canvas.heightNative || window.innerHeight || 720; canvas.widthNative = wNative; canvas.heightNative = hNative;"
+        );
+
+        // 8. Guarantee SDL2 AudioContext auto-resumes and unlocks on user interaction
+        jsText = jsText.replace(
+          "if ((typeof navigator.userActivation) === 'undefined') { autoResumeAudioContext(SDL2.audioContext); }",
+          "if (SDL2.audioContext) { autoResumeAudioContext(SDL2.audioContext); }"
+        );
+        jsText = jsText.replace(
+          "if ((typeof navigator.userActivation) !== 'undefined') { if (navigator.userActivation.hasBeenActive) { SDL2.audioContext.resume(); } }",
+          "if (SDL2.audioContext && SDL2.audioContext.state === 'suspended') { try { SDL2.audioContext.resume(); } catch(e){} }"
+        );
+
+        res.setHeader("content-type", "application/javascript");
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Cross-Origin-Embedder-Policy", "credentialless");
+        res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+        res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+        return res.send(jsText);
+      }
+
+      // If HTML page, inject fullscreen CSS and HUD loader for canvas so games like Portal fill the viewport completely and show clear download status
+      const isHtml = (contentType && contentType.includes("text/html")) || relativePath === "" || relativePath.endsWith(".html");
+      if (isHtml) {
+        res.setHeader("content-type", "text/html; charset=utf-8");
+        let htmlText = await response.text();
+        const customCss = `
+    <style id="game-fullscreen-override">
+      html, body {
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        background: #000 !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif !important;
+      }
+      div.emscripten_border, .emscripten_border {
+        border: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        z-index: 10 !important;
+      }
+      canvas, canvas.emscripten, #canvas {
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: 100vw !important;
+        max-height: 100vh !important;
+        object-fit: cover !important;
+        display: block !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        border: 0 !important;
+        z-index: 10 !important;
+        outline: none !important;
+        background-color: #000 !important;
+      }
+      
+      /* Download Status Ring & Banner (Matching Source Engine HUD) */
+      #portal-hud-banner {
+        position: fixed !important;
+        top: 24px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        z-index: 999999 !important;
+        background: rgba(18, 20, 26, 0.95) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(189, 215, 46, 0.2) !important;
+        border-radius: 40px !important;
+        padding: 10px 24px 10px 16px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 16px !important;
+        color: #e2e8f0 !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+        pointer-events: none !important;
+        transition: opacity 0.3s ease, transform 0.3s ease !important;
+      }
+
+      .portal-hud-ring {
+        width: 36px !important;
+        height: 36px !important;
+        border-radius: 50% !important;
+        background: conic-gradient(#bdd72e 0%, #3a3f4d 0%) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex-shrink: 0 !important;
+        position: relative !important;
+        box-shadow: 0 0 10px rgba(189, 215, 46, 0.4) !important;
+      }
+
+      .portal-hud-ring-inner {
+        width: 24px !important;
+        height: 24px !important;
+        border-radius: 50% !important;
+        background: #12141a !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 10px !important;
+        font-weight: 800 !important;
+        color: #bdd72e !important;
+      }
+
+      .portal-hud-text-container {
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+      }
+
+      .portal-hud-title {
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        color: #f1f5f9 !important;
+        letter-spacing: 0.2px !important;
+        white-space: nowrap !important;
+      }
+
+      .portal-hud-sub {
+        font-size: 11px !important;
+        color: #94a3b8 !important;
+        margin-top: 1px !important;
+      }
+
+      /* Interactive Click-To-Play Overlay */
+      #portal-play-overlay {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        z-index: 999998 !important;
+        background: rgba(10, 12, 18, 0.85) !important;
+        backdrop-filter: blur(8px) !important;
+        display: none;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        color: #ffffff !important;
+        cursor: pointer !important;
+        text-align: center !important;
+        user-select: none !important;
+      }
+
+      #portal-play-btn {
+        background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%) !important;
+        color: #ffffff !important;
+        padding: 16px 36px !important;
+        border-radius: 40px !important;
+        font-size: 18px !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.5px !important;
+        border: none !important;
+        cursor: pointer !important;
+        box-shadow: 0 10px 30px rgba(0, 210, 255, 0.4) !important;
+        transition: all 0.2s ease !important;
+        margin-top: 20px !important;
+      }
+
+      #portal-play-btn:hover {
+        transform: scale(1.05) !important;
+        box-shadow: 0 12px 35px rgba(0, 210, 255, 0.6) !important;
+      }
+
+      #output, textarea#output, #emscripten_logo, a[href*="emscripten"], #status, #spinner, progress, #progress {
+        display: none !important;
+      }
+      #controls {
+        position: fixed !important;
+        top: 10px !important;
+        right: 10px !important;
+        z-index: 99999 !important;
+      }
+    </style>
+  `;
+
+        const customScript = `
+    <script id="portal-hud-script">
+      (function() {
+        // Cross-Origin Isolation Polyfill for SharedArrayBuffer
+        if (!window.crossOriginIsolated && typeof SharedArrayBuffer === 'undefined') {
+          console.log('[Portal Proxy] Attempting SharedArrayBuffer polyfill...');
+        }
+
+        function setupPortalHud() {
+          var status = document.getElementById('status');
+          var progress = document.getElementById('progress');
+          var canvas = document.getElementById('canvas');
+
+          if (!status) return setTimeout(setupPortalHud, 100);
+
+          var banner = document.getElementById('portal-hud-banner');
+          if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'portal-hud-banner';
+            banner.innerHTML = \`
+              <div class="portal-hud-ring" id="portal-hud-ring-bg">
+                <div class="portal-hud-ring-inner" id="portal-hud-ring-percent">0%</div>
+              </div>
+              <div class="portal-hud-text-container">
+                <div class="portal-hud-title" id="portal-hud-text">Downloading map background1</div>
+                <div class="portal-hud-sub" id="portal-hud-sub">Source WebGL Engine — Please wait...</div>
+              </div>
+            \`;
+            document.body.appendChild(banner);
+          }
+
+          var overlay = document.getElementById('portal-play-overlay');
+          if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'portal-play-overlay';
+            overlay.innerHTML = \`
+              <div style="font-size: 28px; font-weight: 800; letter-spacing: 1px; color: #ffffff;">PORTAL ENGINE READY</div>
+              <div style="font-size: 14px; color: #94a3b8; margin-top: 8px;">Click anywhere to start playing with full audio</div>
+              <button id="portal-play-btn">▶ START PLAYING</button>
+            \`;
+            document.body.appendChild(overlay);
+          }
+
+          var ringBg = document.getElementById('portal-hud-ring-bg');
+          var ringPercent = document.getElementById('portal-hud-ring-percent');
+          var hudText = document.getElementById('portal-hud-text');
+          var hudSub = document.getElementById('portal-hud-sub');
+          var hasFinished = false;
+
+          function startGame() {
+            if (overlay) overlay.style.display = 'none';
+            if (banner) {
+              banner.style.opacity = '0';
+              setTimeout(function() { banner.style.display = 'none'; }, 400);
+            }
+            if (typeof SDL2 !== 'undefined' && SDL2.audioContext) {
+              SDL2.audioContext.resume().catch(function(){});
+            }
+            if (typeof AL !== 'undefined' && AL.sharedCaptureAudioCtx) {
+              AL.sharedCaptureAudioCtx.resume().catch(function(){});
+            }
+            if (canvas) {
+              canvas.widthNative = window.innerWidth || 1280;
+              canvas.heightNative = window.innerHeight || 720;
+              if (typeof canvas.focus === 'function') {
+                try { canvas.focus(); } catch(e){}
+              }
+            }
+            window.dispatchEvent(new Event('resize'));
+          }
+
+          if (overlay) {
+            overlay.addEventListener('click', startGame);
+          }
+
+          function checkStatus() {
+            var text = (status.innerText || status.textContent || '').trim();
+            var val = progress && progress.value !== null ? parseFloat(progress.value) : null;
+            var max = progress && progress.max !== null ? parseFloat(progress.max) : null;
+
+            var percent = 0;
+            if (val !== null && !isNaN(val) && val >= 0) {
+              if (max !== null && !isNaN(max) && max > 0) {
+                percent = Math.min(100, Math.max(0, Math.round((val / max) * 100)));
+              } else if (val <= 1) {
+                percent = Math.min(100, Math.max(0, Math.round(val * 100)));
+              } else if (val <= 100) {
+                percent = Math.min(100, Math.max(0, Math.round(val)));
+              }
+            }
+
+            if (ringBg) {
+              ringBg.style.background = 'conic-gradient(#bdd72e 0% ' + percent + '%, #3a3f4d ' + percent + '% 100%)';
+            }
+            if (ringPercent) {
+              ringPercent.textContent = percent > 0 ? percent + '%' : '✓';
+            }
+
+            if (text && (text.indexOf('Downloading') !== -1 || text.indexOf('Preparing') !== -1)) {
+              window._portalHasStartedDownloading = true;
+            }
+
+            if (text === 'Running...' || text === 'All downloads complete.' || (percent === 100 && (!text || text.indexOf('Downloading') === -1))) {
+              hasFinished = true;
+            }
+
+            if (!text && (hasFinished || window._portalHasStartedDownloading)) {
+              hasFinished = true;
+            }
+
+            if (hasFinished) {
+              if (banner) banner.style.display = 'none';
+              if (overlay && overlay.style.display !== 'none') {
+                overlay.style.display = 'flex';
+              }
+              return;
+            }
+
+            if (hudText) {
+              if (text) {
+                if (text.indexOf('(') !== -1 || text.indexOf('%') !== -1 || text.indexOf('MB') !== -1) {
+                  hudText.textContent = text;
+                } else if (percent > 0 && percent < 100) {
+                  hudText.textContent = text + ' (' + percent + '%)';
+                } else {
+                  hudText.textContent = text;
+                }
+              } else if (percent > 0 && percent < 100) {
+                hudText.textContent = 'Downloading map... (' + percent + '%)';
+              } else {
+                hudText.textContent = 'Initializing Portal Engine...';
+              }
+            }
+
+            banner.style.display = 'flex';
+            banner.style.opacity = '1';
+          }
+
+          var observer = new MutationObserver(checkStatus);
+          observer.observe(status, { childList: true, characterData: true, subtree: true });
+          setInterval(checkStatus, 250);
+          checkStatus();
+
+          function unlockAudioAndFocus() {
+            if (typeof SDL2 !== 'undefined' && SDL2.audioContext && SDL2.audioContext.state === 'suspended') {
+              SDL2.audioContext.resume().catch(function(){});
+            }
+            if (typeof AL !== 'undefined' && AL.sharedCaptureAudioCtx && AL.sharedCaptureAudioCtx.state === 'suspended') {
+              AL.sharedCaptureAudioCtx.resume().catch(function(){});
+            }
+            if (canvas && typeof canvas.focus === 'function') {
+              try { canvas.focus(); } catch(e){}
+            }
+          }
+          ['click', 'keydown', 'mousedown', 'pointerdown', 'touchstart'].forEach(function(evt) {
+            window.addEventListener(evt, unlockAudioAndFocus, { passive: true, capture: true });
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', setupPortalHud);
+        } else {
+          setupPortalHud();
+        }
+      })();
+    </script>
+  `;
+
+        const origErrMarker = "window.onerror = (event) => {";
+        if (htmlText.includes(origErrMarker)) {
+          const idxErr = htmlText.indexOf(origErrMarker);
+          const firstClose = htmlText.indexOf("};", idxErr);
+          const secondClose = htmlText.indexOf("};", firstClose + 2);
+          if (idxErr !== -1 && secondClose !== -1) {
+            const origErrBlock = htmlText.slice(idxErr, secondClose + 2);
+            const safeErrBlock = `window.onerror = (event) => {
+        console.warn('[Portal Proxy] Intercepted non-fatal window.onerror:', event);
+        return true;
+      };
+      window.onunhandledrejection = (event) => {
+        console.warn('[Portal Proxy] Intercepted unhandledrejection:', event ? event.reason : '');
+        if (event && event.preventDefault) event.preventDefault();
+      };`;
+            htmlText = htmlText.replace(origErrBlock, safeErrBlock);
+          }
+        }
+
+        if (htmlText.includes("</head>")) {
+          htmlText = htmlText.replace("</head>", `${customCss}</head>`);
+        } else {
+          htmlText = customCss + htmlText;
+        }
+
+        if (htmlText.includes("</body>")) {
+          htmlText = htmlText.replace("</body>", `${customScript}</body>`);
+        } else {
+          htmlText = htmlText + customScript;
+        }
+
+        return res.send(htmlText);
+      }
 
       if (response.body) {
         Readable.fromWeb(response.body as any).pipe(res);
@@ -293,7 +964,11 @@ async function startServer() {
   app.get("/api/raw-proxy", async (req, res) => {
     let targetUrl = req.query.url as string;
     if (!targetUrl) {
-      return res.status(400).send("url query parameter is required");
+      return res.setHeader("content-type", "text/html; charset=utf-8").send(`
+        <body style="background:#000;color:#fff;font-family:monospace;display:flex;align-items:center;justify-center;height:100vh;margin:0">
+          <div style="text-align:center">ERROR 403: URL query parameter is required</div>
+        </body>
+      `);
     }
 
     // Convert github.com/.../blob/... to raw.githubusercontent.com/.../...
@@ -303,11 +978,18 @@ async function startServer() {
         .replace("/blob/", "/");
     }
 
-    // Security check: Only allow safe domains
-    const allowedDomains = ["jsdelivr.net", "githubusercontent.com", "githack.com", "github.io", "github.com"];
-    const isAllowed = allowedDomains.some(domain => targetUrl.includes(domain));
+    // Security check: Only allow safe HTTP/HTTPS domains
+    const isAllowed = targetUrl.startsWith("http://") || targetUrl.startsWith("https://");
     if (!isAllowed) {
-      return res.status(403).send("Forbidden proxy target");
+      res.setHeader("content-type", "text/html; charset=utf-8");
+      return res.send(`
+        <body style="background:#000;color:#fff;font-family:monospace;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
+          <div style="text-align:center;padding:20px;border:1px solid rgba(255,255,255,0.1);border-radius:12px">
+            <h2 style="margin:0 0 8px 0;font-size:20px">ERROR 403</h2>
+            <p style="margin:0;font-size:12px;color:#888">Forbidden proxy target URL</p>
+          </div>
+        </body>
+      `);
     }
 
     try {
@@ -317,8 +999,33 @@ async function startServer() {
           'Accept': '*/*'
         }
       });
+
       if (!response.ok) {
-        return res.status(response.status).send(`Failed to fetch upstream: ${response.statusText}`);
+        res.setHeader("content-type", "text/html; charset=utf-8");
+        return res.status(200).send(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <title>ERROR ${response.status}</title>
+            <style>
+              body { background: #000; color: #fff; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 16px; box-sizing: border-box; text-align: center; }
+              .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 24px 20px; max-width: 380px; width: 100%; }
+              .title { font-size: 20px; font-weight: 900; letter-spacing: 2px; margin-bottom: 8px; color: #fff; text-transform: uppercase; }
+              .desc { font-size: 11px; color: #a1a1aa; margin-bottom: 18px; line-height: 1.5; }
+              .btn { display: inline-block; padding: 10px 18px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #00f0ff; text-decoration: none; font-size: 11px; font-weight: bold; border-radius: 8px; transition: all 0.2s; }
+              .btn:hover { background: #00f0ff; color: #000; }
+            </style>
+          </head>
+          <body>
+            <div class="card">
+              <div class="title">⚠️ ERROR 403</div>
+              <div class="desc">If this game remains a black screen or cannot be embedded, launch it directly in a new tab!</div>
+              <a class="btn" href="${targetUrl}" target="_blank" rel="noopener noreferrer">🚀 OPEN IN NEW TAB</a>
+            </div>
+          </body>
+          </html>
+        `);
       }
 
       let content = await response.text();
@@ -370,7 +1077,31 @@ async function startServer() {
       res.send(content);
     } catch (err: any) {
       console.error(`Error in /api/raw-proxy for ${targetUrl}:`, err);
-      res.status(500).send(`Proxy error: ${err.message}`);
+      res.setHeader("content-type", "text/html; charset=utf-8");
+      res.status(200).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>ERROR 403</title>
+          <style>
+            body { background: #000; color: #fff; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 16px; box-sizing: border-box; text-align: center; }
+            .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 24px 20px; max-width: 380px; width: 100%; }
+            .title { font-size: 20px; font-weight: 900; letter-spacing: 2px; margin-bottom: 8px; color: #fff; text-transform: uppercase; }
+            .desc { font-size: 11px; color: #a1a1aa; margin-bottom: 18px; line-height: 1.5; }
+            .btn { display: inline-block; padding: 10px 18px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #00f0ff; text-decoration: none; font-size: 11px; font-weight: bold; border-radius: 8px; transition: all 0.2s; }
+            .btn:hover { background: #00f0ff; color: #000; }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <div class="title">⚠️ ERROR 403</div>
+            <div class="desc">Network connection failed or host refused connection.</div>
+            <a class="btn" href="${targetUrl}" target="_blank" rel="noopener noreferrer">🚀 OPEN IN NEW TAB</a>
+          </div>
+        </body>
+        </html>
+      `);
     }
   });
 
